@@ -33,7 +33,11 @@ jobs:
         with:
           python-version: '3.11'
       - run: corepack enable
-      - run: yarn install --frozen-lockfile
+      # Native SQLite must target Electron, not the host Node 22 ABI.
+      - run: yarn install --frozen-lockfile --ignore-scripts
+      - run: node node_modules/electron/install.js
+      - run: node node_modules/esbuild/install.js
+      - run: yarn postinstall
       - run: yarn typecheck
       - name: Public source check (Linux)
         if: runner.os == 'Linux'
