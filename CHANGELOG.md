@@ -1,0 +1,32 @@
+# Changelog
+
+## 0.40.1 — 2026-10-29
+
+- Removed Tax from item lists and Tax/HSN from item-group lists.
+- Grouped nullable IN filters so they cannot escape other query/delete conditions.
+- Deferred sync notifications until posting commits and reset syncing state after failed saves.
+- Fixed packaged deep-page reload and malformed saved list links; Settings tab links now switch while Settings is already open.
+- Added a 57-page Bengali user guide with 51 screenshots from an isolated synthetic company.
+
+
+## 0.40.0 — 2026-10-28
+
+- Atomic document submit/cancel and rollback regression coverage.
+- Consistent status filtering across pages and database pagination for regular lists.
+- Salary draft employee changes refresh the salary default.
+- Cashflow includes legacy direct Cash/Bank group postings.
+- Invoice settlement summary clearly distinguishes a derived settled/adjusted amount from a cash receipt.
+- Clean source export/privacy check and Windows x64 setup/portable GitHub builds/releases.
+- Legacy business import reconciliation remains evidence-dependent; no guessed financial corrections are posted.
+
+## 0.39.1
+
+- Removed Data Tools navigation while preserving internal backup safeguards.
+
+## 0.39.0
+
+- Added Expense, Bank & Cash, Employees and Salary Payments.
+
+## 0.38.0 and earlier
+
+- Nivo branding, optional features, simplified tax/documentation UI, invoice summaries and backup safeguards. See the dated audit and verification documents for prior changes.

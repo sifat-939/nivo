@@ -1,0 +1,61 @@
+{
+  "name": "Employee",
+  "label": "Employee",
+  "naming": "manual",
+  "fields": [
+    {
+      "fieldname": "name",
+      "label": "Employee ID",
+      "fieldtype": "Data",
+      "required": true,
+      "section": "Default"
+    },
+    {
+      "fieldname": "employeeName",
+      "label": "Employee Name",
+      "fieldtype": "Data",
+      "required": true,
+      "section": "Default"
+    },
+    {
+      "fieldname": "designation",
+      "label": "Designation",
+      "fieldtype": "Data",
+      "section": "Default"
+    },
+    {
+      "fieldname": "joiningDate",
+      "label": "Joining Date",
+      "fieldtype": "Date",
+      "required": true,
+      "section": "Default"
+    },
+    {
+      "fieldname": "salary",
+      "label": "Monthly Salary",
+      "fieldtype": "Currency",
+      "section": "Details"
+    },
+    {
+      "fieldname": "phone",
+      "label": "Phone",
+      "fieldtype": "Data",
+      "section": "Details"
+    },
+    {
+      "fieldname": "email",
+      "label": "Email",
+      "fieldtype": "Data",
+      "section": "Details"
+    },
+    {
+      "fieldname": "isActive",
+      "label": "Active",
+      "fieldtype": "Check",
+      "default": true,
+      "section": "Details"
+    }
+  ],
+  "keywordFields": ["name", "employeeName", "designation"],
+  "linkDisplayField": "employeeName"
+}

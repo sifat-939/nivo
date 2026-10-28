@@ -1,0 +1,140 @@
+import { t } from 'fyo';
+import { ModelNameEnum } from 'models/types';
+import { openSettings, routeTo } from './ui';
+import { GetStartedConfigItem } from './types';
+
+export function getGetStartedConfig(): GetStartedConfigItem[] {
+  /* eslint-disable @typescript-eslint/no-misused-promises */
+  return [
+    {
+      label: t`Organisation`,
+      items: [
+        {
+          key: 'General',
+          label: t`General`,
+          icon: 'general',
+          description: t`Set up your company information, email, country and fiscal year`,
+          fieldname: 'companySetup',
+          action: () => openSettings(ModelNameEnum.AccountingSettings),
+        },
+        {
+          key: 'Print',
+          label: t`Print`,
+          icon: 'invoice',
+          description: t`Customize your invoices by adding a logo and address details`,
+          fieldname: 'printSetup',
+          action: () => openSettings(ModelNameEnum.PrintSettings),
+        },
+        {
+          key: 'System',
+          label: t`System`,
+          icon: 'system',
+          description: t`Setup system defaults like date format and display precision`,
+          fieldname: 'systemSetup',
+          action: () => openSettings(ModelNameEnum.SystemSettings),
+        },
+      ],
+    },
+    {
+      label: t`Accounts`,
+      items: [
+        {
+          key: 'Review Accounts',
+          label: t`Review Accounts`,
+          icon: 'review-ac',
+          description: t`Review your chart of accounts and add any accounts as needed`,
+          action: () => routeTo('/chart-of-accounts'),
+          fieldname: 'chartOfAccountsReviewed',
+        },
+        {
+          key: 'Opening Balances',
+          label: t`Opening Balances`,
+          icon: 'opening-ac',
+          fieldname: 'openingBalanceChecked',
+          action: () => routeTo('/list/JournalEntry'),
+          description: t`Set up your opening balances before performing any accounting entries`,
+        },
+      ],
+    },
+    {
+      label: t`Sales`,
+      items: [
+        {
+          key: 'Add Sales Items',
+          label: t`Add Items`,
+          icon: 'item',
+          description: t`Add products or services that you sell to your customers`,
+          action: () =>
+            routeTo({
+              path: `/list/Item/${t`Sales Items`}`,
+              query: {
+                filters: JSON.stringify({ for: 'Sales' }),
+              },
+            }),
+          fieldname: 'salesItemCreated',
+        },
+        {
+          key: 'Add Customers',
+          label: t`Add Customers`,
+          icon: 'customer',
+          description: t`Add a few customers to create your first sales invoice`,
+          action: () =>
+            routeTo({
+              path: `/list/Party/${t`Customers`}`,
+              query: {
+                filters: JSON.stringify({ role: 'Customer' }),
+              },
+            }),
+          fieldname: 'customerCreated',
+        },
+        {
+          key: 'Create Sales Invoice',
+          label: t`Create Sales Invoice`,
+          icon: 'sales-invoice',
+          description: t`Create your first sales invoice for the created customer`,
+          action: () => routeTo('/list/SalesInvoice'),
+          fieldname: 'invoiceCreated',
+        },
+      ],
+    },
+    {
+      label: t`Purchase`,
+      items: [
+        {
+          key: 'Add Purchase Items',
+          label: t`Add Items`,
+          icon: 'item',
+          description: t`Add products or services that you buy from your suppliers`,
+          action: () =>
+            routeTo({
+              path: `/list/Item/${t`Purchase Items`}`,
+              query: {
+                filters: JSON.stringify({ for: 'Purchases' }),
+              },
+            }),
+          fieldname: 'purchaseItemCreated',
+        },
+        {
+          key: 'Add Suppliers',
+          label: t`Add Suppliers`,
+          icon: 'supplier',
+          description: t`Add a few suppliers to create your first purchase invoice`,
+          action: () =>
+            routeTo({
+              path: `/list/Party/${t`Suppliers`}`,
+              query: { filters: JSON.stringify({ role: 'Supplier' }) },
+            }),
+          fieldname: 'supplierCreated',
+        },
+        {
+          key: 'Create Purchase Invoice',
+          label: t`Create Purchase Invoice`,
+          icon: 'purchase-invoice',
+          description: t`Create your first purchase invoice from the created supplier`,
+          action: () => routeTo('/list/PurchaseInvoice'),
+          fieldname: 'billCreated',
+        },
+      ],
+    },
+  ];
+}

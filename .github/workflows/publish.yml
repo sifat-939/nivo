@@ -1,0 +1,41 @@
+name: Release Nivo
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require tag to match application version
+        run: node -e "if (process.env.GITHUB_REF_NAME !== 'v' + require('./package.json').version) process.exit(1)"
+  build:
+    needs: version
+    uses: ./.github/workflows/build.yml
+  release:
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Nivo-*
+          path: release-artifacts
+      - name: Publish installers to this repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          mapfile -t installers < <(find release-artifacts -type f \( -name '*.exe' -o -name '*.AppImage' \) | sort)
+          test "${#installers[@]}" -eq 3
+          test -s output/pdf/Nivo-Bangla-Guide.pdf
+          sha256sum "${installers[@]}" output/pdf/Nivo-Bangla-Guide.pdf | sed 's|  .*/|  |' > SHA256SUMS.txt
+          gh release create "$GITHUB_REF_NAME" "${installers[@]}" output/pdf/Nivo-Bangla-Guide.pdf SHA256SUMS.txt --repo "$GITHUB_REPOSITORY" --verify-tag --title "Nivo $GITHUB_REF_NAME" --notes-file docs/release-notes.md

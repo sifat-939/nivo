@@ -1,0 +1,62 @@
+name: Build Nivo
+
+on:
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  packages:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            platform: Windows
+            command: yarn build --win nsis portable --x64 --nosign --publish never
+            pattern: '*.exe'
+          - os: ubuntu-22.04
+            platform: Linux
+            command: yarn build --linux AppImage --x64 --nosign --publish never
+            pattern: '*.AppImage'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: yarn
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: corepack enable
+      - run: yarn install --frozen-lockfile
+      - run: yarn typecheck
+      - name: Public source check (Linux)
+        if: runner.os == 'Linux'
+        run: python3 scripts/check-repository.py
+      - name: Regression tests (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a bash scripts/test-nivo.sh
+      - name: Package
+        run: ${{ matrix.command }}
+      - name: Packaged regressions (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          xvfb-run -a node uitest/nivo-audit-regression.cjs
+          xvfb-run -a node uitest/nivo-accounts-hr.cjs
+      - name: Windows packaged startup smoke
+        if: runner.os == 'Windows'
+        run: node uitest/windows-smoke.cjs
+      - name: Checksums
+        run: node scripts/release-checksums.mjs dist_electron/bundled
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Nivo-${{ matrix.platform }}-x64
+          if-no-files-found: error
+          path: |
+            dist_electron/bundled/${{ matrix.pattern }}
+            dist_electron/bundled/SHA256SUMS.txt

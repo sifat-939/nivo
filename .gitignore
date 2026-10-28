@@ -1,0 +1,69 @@
+.DS_Store
+node_modules
+/dbs
+/dist
+/notebook
+
+# local env files
+.env
+.env.publish
+.env.local
+.env.*.local
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.code-workspace
+
+#Electron-builder output
+/dist_electron
+log_creds.txt
+
+# Company databases and SQLite sidecars must stay outside the source repository.
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+__pycache__/
+
+# Local migration evidence, private reports, exports and signing material.
+/.local-private/
+/release-source/
+/release-source.zip
+*.p12
+*.pfx
+*.pem
+*.key
+*.AppImage
+*.exe
+*.dmg
+*.deb
+*.rpm
+
+# Business-specific one-off import/correction tools stay local.
+/scripts/importKarbarDump.ts
+/scripts/appendKarbarEvidence.ts
+/scripts/appendKarbarFinalManifests.py
+/scripts/completeKarbarSpotReceipt.ts
+/scripts/correctKarbarDiscountedInvoice.ts
+/scripts/correctKarbarPaymentAccounts.ts
+/scripts/indexKarbarLiveReports.py
+/scripts/reconcileKarbarPartyDirections.ts
+/scripts/repairKarbarArchiveRecordHashes.py
+/scripts/repairKarbarArchiveRows.py
+/scripts/audit-import.py
+
+# Local document rendering previews
+/tmp/

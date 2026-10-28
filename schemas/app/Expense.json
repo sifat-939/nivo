@@ -1,0 +1,51 @@
+{
+  "name": "Expense",
+  "label": "Expense",
+  "naming": "autoincrement",
+  "isSubmittable": true,
+  "fields": [
+    {
+      "fieldname": "date",
+      "label": "Date",
+      "fieldtype": "Date",
+      "required": true,
+      "section": "Default"
+    },
+    {
+      "fieldname": "amount",
+      "label": "Amount",
+      "fieldtype": "Currency",
+      "required": true,
+      "section": "Default"
+    },
+    {
+      "fieldname": "expenseAccount",
+      "label": "Expense Account",
+      "fieldtype": "Link",
+      "target": "Account",
+      "required": true,
+      "section": "Accounts"
+    },
+    {
+      "fieldname": "paidFrom",
+      "label": "Paid From",
+      "fieldtype": "Link",
+      "target": "Account",
+      "required": true,
+      "section": "Accounts"
+    },
+    {
+      "fieldname": "description",
+      "label": "Description",
+      "fieldtype": "Text",
+      "section": "Details"
+    },
+    {
+      "fieldname": "attachment",
+      "label": "Attachment",
+      "fieldtype": "Attachment",
+      "section": "Details"
+    }
+  ],
+  "keywordFields": ["name", "description"]
+}

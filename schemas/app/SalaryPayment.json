@@ -1,0 +1,81 @@
+{
+  "name": "SalaryPayment",
+  "label": "Salary Payment",
+  "naming": "autoincrement",
+  "isSubmittable": true,
+  "fields": [
+    {
+      "fieldname": "date",
+      "label": "Payment Date",
+      "fieldtype": "Date",
+      "required": true,
+      "section": "Default"
+    },
+    {
+      "fieldname": "employee",
+      "label": "Employee",
+      "fieldtype": "Link",
+      "target": "Employee",
+      "required": true,
+      "section": "Default"
+    },
+    {
+      "fieldname": "salaryMonth",
+      "label": "Salary Month",
+      "fieldtype": "Date",
+      "required": true,
+      "section": "Default"
+    },
+    {
+      "fieldname": "salary",
+      "label": "Salary",
+      "fieldtype": "Currency",
+      "required": true,
+      "section": "Amounts"
+    },
+    {
+      "fieldname": "bonus",
+      "label": "Bonus",
+      "fieldtype": "Currency",
+      "default": 0,
+      "section": "Amounts"
+    },
+    {
+      "fieldname": "deductions",
+      "label": "Deductions",
+      "fieldtype": "Currency",
+      "default": 0,
+      "section": "Amounts"
+    },
+    {
+      "fieldname": "netPay",
+      "label": "Net Pay",
+      "fieldtype": "Currency",
+      "readOnly": true,
+      "section": "Amounts"
+    },
+    {
+      "fieldname": "expenseAccount",
+      "label": "Expense Account",
+      "fieldtype": "Link",
+      "target": "Account",
+      "required": true,
+      "section": "Accounts"
+    },
+    {
+      "fieldname": "paidFrom",
+      "label": "Paid From",
+      "fieldtype": "Link",
+      "target": "Account",
+      "required": true,
+      "section": "Accounts"
+    },
+    {
+      "fieldname": "remarks",
+      "label": "Remarks",
+      "fieldtype": "Text",
+      "section": "Details"
+    }
+  ],
+  "keywordFields": ["name", "employee"]
+}
