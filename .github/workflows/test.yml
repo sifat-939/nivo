@@ -18,7 +18,11 @@ jobs:
           node-version: '22'
           cache: yarn
       - run: corepack enable
-      - run: yarn install --frozen-lockfile
+      # Native SQLite must target Electron, not the host Node 22 ABI.
+      - run: yarn install --frozen-lockfile --ignore-scripts
+      - run: node node_modules/electron/install.js
+      - run: node node_modules/esbuild/install.js
+      - run: yarn postinstall
       - run: yarn typecheck
       - run: python3 scripts/check-repository.py
       - run: xvfb-run -a bash scripts/test-nivo.sh
