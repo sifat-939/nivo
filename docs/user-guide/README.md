@@ -1,6 +1,6 @@
 # Bengali user guide
 
-The finished guide is at `output/pdf/Nivo-Bangla-Guide.pdf` (relative to the repository root). It has 57 A4 pages and 51 real application screenshots captured from a synthetic, disposable company. No customer database or private screenshots are used.
+The finished guide is at `output/pdf/Nivo-Bangla-Guide.pdf` (relative to the repository root). It has 58 A4 pages and 52 real application screenshots captured from a synthetic, disposable company. No customer database or private screenshots are used.
 
 - `chapters.json`: editable Bengali chapter text.
 - `images/`: synthetic screenshots for each chapter.

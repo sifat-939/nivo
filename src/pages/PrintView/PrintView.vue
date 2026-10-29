@@ -2,7 +2,7 @@
   <div class="flex flex-col flex-1 bg-gray-25 dark:bg-gray-875">
     <PageHeader :border="true" :title="t`Print View`">
       <AutoComplete
-        v-if="templateList.length"
+        v-if="templateList.length > 1"
         :df="{
           fieldtype: 'AutoComplete',
           fieldname: 'templateName',
@@ -24,6 +24,23 @@
       </Button>
     </PageHeader>
 
+    <div
+      v-if="schemaName === 'Party'"
+      class="flex gap-4 p-4 border-b dark:border-gray-800"
+    >
+      <FormControl
+        :df="{ fieldtype: 'Date', fieldname: 'from', label: 'From Date' }"
+        :show-label="true"
+        :value="fromDate"
+        @change="setStatementFrom"
+      />
+      <FormControl
+        :df="{ fieldtype: 'Date', fieldname: 'to', label: 'To Date' }"
+        :show-label="true"
+        :value="toDate"
+        @change="setStatementTo"
+      />
+    </div>
     <!-- Template Display Area -->
     <div class="overflow-auto custom-scroll custom-scroll-thumb1 p-4">
       <!-- Display Hints -->
@@ -49,6 +66,7 @@
   </div>
 </template>
 <script lang="ts">
+import { printTemplateFilter, dateKey } from 'utils/standardPrint';
 import { Doc } from 'fyo/model/doc';
 import { Action } from 'fyo/model/types';
 import { PrintTemplate } from 'models/baseModels/PrintTemplate';
@@ -57,6 +75,7 @@ import Button from 'src/components/Button.vue';
 import AutoComplete from 'src/components/Controls/AutoComplete.vue';
 import DropdownWithActions from 'src/components/DropdownWithActions.vue';
 import PageHeader from 'src/components/PageHeader.vue';
+import FormControl from 'src/components/Controls/FormControl.vue';
 import { handleErrorWithDialog } from 'src/errorHandling';
 import { fyo } from 'src/initFyo';
 import { getPrintTemplatePropValues } from 'src/utils/printTemplates';
@@ -70,6 +89,7 @@ export default defineComponent({
   name: 'PrintView',
   components: {
     PageHeader,
+    FormControl,
     Button,
     AutoComplete,
     PrintContainer,
@@ -81,6 +101,8 @@ export default defineComponent({
   },
   data() {
     return {
+      fromDate: '',
+      toDate: dateKey(new Date()),
       doc: null,
       scale: 1,
       values: null,
@@ -88,6 +110,8 @@ export default defineComponent({
       templateName: null,
       templateList: [],
     } as {
+      fromDate: string;
+      toDate: string;
       doc: null | Doc;
       scale: number;
       values: null | PrintValues;
@@ -133,18 +157,6 @@ export default defineComponent({
             await openSettings(ModelNameEnum.PrintSettings);
           },
         },
-        {
-          label: this.t`New Template`,
-          group: this.t`Create`,
-          action: async () => {
-            const doc = this.fyo.doc.getNewDoc(ModelNameEnum.PrintTemplate, {
-              type: this.schemaName,
-            });
-
-            const route = getFormRoute(doc.schemaName, doc.name!);
-            await routeTo(route);
-          },
-        },
       ];
 
       const templateDocName = this.templateDoc?.name;
@@ -157,20 +169,6 @@ export default defineComponent({
               ModelNameEnum.PrintTemplate,
               templateDocName
             );
-            await routeTo(route);
-          },
-        });
-
-        actions.push({
-          label: this.t`Duplicate Template`,
-          group: this.t`Create`,
-          action: async () => {
-            const doc = this.fyo.doc.getNewDoc(ModelNameEnum.PrintTemplate, {
-              type: this.schemaName,
-              template: this.templateDoc?.template,
-            });
-
-            const route = getFormRoute(doc.schemaName, doc.name!);
             await routeTo(route);
           },
         });
@@ -196,6 +194,27 @@ export default defineComponent({
     this.reset();
   },
   methods: {
+    async setStatementFrom(value: unknown) {
+      this.fromDate = typeof value === 'string' ? value : '';
+      await this.refreshStatement();
+    },
+    async setStatementTo(value: unknown) {
+      this.toDate =
+        typeof value === 'string' && value ? value : dateKey(new Date());
+      await this.refreshStatement();
+    },
+    async refreshStatement() {
+      if (!this.doc) return;
+      try {
+        this.values = await getPrintTemplatePropValues(this.doc as Doc, {
+          from: this.fromDate,
+          to: this.toDate,
+        });
+      } catch (error) {
+        this.values = null;
+        await handleErrorWithDialog(error);
+      }
+    },
     async initialize() {
       this.doc = await fyo.doc.getDoc(this.schemaName, this.name);
       await this.setTemplateList();
@@ -205,7 +224,10 @@ export default defineComponent({
       }
 
       if (this.doc) {
-        this.values = await getPrintTemplatePropValues(this.doc as Doc);
+        this.values = await getPrintTemplatePropValues(this.doc as Doc, {
+          from: this.fromDate,
+          to: this.toDate,
+        });
       }
     },
     setScale() {
@@ -244,7 +266,7 @@ export default defineComponent({
     },
     async setTemplateList(): Promise<void> {
       const list = (await this.fyo.db.getAllRaw(ModelNameEnum.PrintTemplate, {
-        filters: { type: this.schemaName },
+        filters: printTemplateFilter(this.schemaName),
       })) as { name: string }[];
 
       this.templateList = list.map(({ name }) => name);
@@ -295,7 +317,8 @@ export default defineComponent({
         return;
       }
 
-      await this.onTemplateNameChange(templateName);
+      if (this.templateList.includes(templateName))
+        await this.onTemplateNameChange(templateName);
     },
   },
 });

@@ -4,6 +4,8 @@ import { HiddenMap } from 'fyo/model/types';
 
 export class PrintSettings extends Doc {
   logo?: Attachment;
+  authorizedSignature?: string;
+  paymentQR?: string;
   email?: string;
   phone?: string;
   address?: string;

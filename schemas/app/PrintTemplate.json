@@ -42,5 +42,6 @@
       "default": true,
       "readOnly": true
     }
-  ]
+  ],
+  "create": false
 }

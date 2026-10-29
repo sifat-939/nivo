@@ -1,3 +1,11 @@
+## 0.40.2
+
+- Replace obsolete print templates with one shared Nivo Standard A4 design.
+- Add customer/supplier statements with date range, opening/running/closing balances.
+- Add company-scoped signature and payment QR settings; hide signature on drafts.
+- Print allocated payments separately from adjustments and preserve multi-page tables.
+- Migrate template references atomically without altering business transactions.
+
 # Changelog
 
 ## 0.40.1 — 2026-10-29

@@ -253,6 +253,7 @@
 <script lang="ts">
 import { EditorView } from 'codemirror';
 import { Doc } from 'fyo/model/doc';
+import { printPreviewType } from 'utils/standardPrint';
 import { PrintTemplate } from 'models/baseModels/PrintTemplate';
 import { ModelNameEnum } from 'models/types';
 import { saveExportData } from 'reports/commonExporter';
@@ -400,7 +401,9 @@ export default defineComponent({
         return [];
       }
 
-      const actions = getActionsForDoc(this.doc as Doc);
+      const actions = getActionsForDoc(this.doc as Doc).filter(
+        (action) => action.group !== this.t`Create`
+      );
       actions.push({
         label: this.t`Print Settings`,
         group: this.t`View`,
@@ -448,7 +451,7 @@ export default defineComponent({
       );
     },
     displayDocField(): TargetField {
-      const target = this.doc?.type ?? ModelNameEnum.SalesInvoice;
+      const target = printPreviewType(this.doc?.type);
       return {
         fieldname: 'displayDoc',
         label: this.t`Display Doc`,
@@ -550,7 +553,10 @@ export default defineComponent({
       return runSingleFlight(this.initialization, async () => {
         await this.setDoc();
         if (this.doc?.type) {
-          this.hints = getPrintTemplatePropHints(this.doc.type, this.fyo);
+          this.hints = getPrintTemplatePropHints(
+            printPreviewType(this.doc.type),
+            this.fyo
+          );
         }
 
         focusOrSelectFormControl(this.doc as Doc, this.$refs.nameField, false);
@@ -656,7 +662,7 @@ export default defineComponent({
       printContainer.savePDF(this.doc?.name, shouldPrint);
     },
     async setDisplayInitialDoc() {
-      const schemaName = this.doc?.type;
+      const schemaName = printPreviewType(this.doc?.type);
       if (!schemaName || this.displayDoc?.schemaName === schemaName) {
         return;
       }
@@ -721,7 +727,7 @@ export default defineComponent({
         return;
       }
 
-      const schemaName = this.doc?.type;
+      const schemaName = printPreviewType(this.doc?.type);
       if (!schemaName) {
         return;
       }

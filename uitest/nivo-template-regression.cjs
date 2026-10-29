@@ -67,7 +67,7 @@ const { execFileSync } = require('child_process');
     await page.getByTestId('company-name').waitFor();
     await page.locator('.nivo-dashboard-card').first().waitFor();
     await page.evaluate(() =>
-      localStorage.setItem('lastRoute', '/template-builder/Business - Shipment')
+      localStorage.setItem('lastRoute', '/template-builder/Nivo Standard')
     );
     await app.evaluate(({ BrowserWindow }) =>
       BrowserWindow.getAllWindows()[0].loadURL('app://./index.html')

@@ -3,18 +3,15 @@ import { Doc } from 'fyo/model/doc';
 import { Invoice } from 'models/baseModels/Invoice/Invoice';
 import { ModelNameEnum } from 'models/types';
 import { FieldTypeEnum, Schema, TargetField } from 'schemas/types';
-import { getValueMapFromList } from 'utils/index';
-import { TemplateFile } from 'utils/types';
 import { showToast } from './interactive';
 import { PrintValues } from './types';
-import {
-  getDocFromNameIfExistsElseNew,
-  getSavePath,
-  showExportInFolder,
-} from './ui';
+import { getSavePath, showExportInFolder } from './ui';
 import { Money } from 'pesa';
-import { SalesInvoice } from 'models/baseModels/SalesInvoice/SalesInvoice';
-import { Payment } from 'models/baseModels/Payment/Payment';
+import { migrateStandardPrint } from 'utils/migrateStandardPrint';
+import {
+  addStandardDocumentValues,
+  getStatementValues,
+} from 'utils/standardPrintValues';
 
 export type PrintTemplateHint = {
   [key: string]: string | PrintTemplateHint | PrintTemplateHint[];
@@ -33,18 +30,10 @@ const excludedPrintHintFields = new Set([
   'taxesAdded',
 ]);
 
-type TemplateUpdateItem = {
-  name: string;
-  template: string;
-  type: string;
-  width: number;
-  height: number;
-};
-
-const accountingSettingsFields = ['gstin', 'taxId'];
-
 const printSettingsFields = [
   'logo',
+  'authorizedSignature',
+  'paymentQR',
   'displayLogo',
   'color',
   'font',
@@ -58,126 +47,52 @@ const printSettingsFields = [
 ];
 
 export async function getPrintTemplatePropValues(
-  doc: Doc
+  doc: Doc,
+  statementRange: { from?: string; to?: string } = {}
 ): Promise<PrintValues> {
-  const fyo = doc.fyo;
-  let paymentId;
-  let sinvDoc;
-
-  const values: PrintValues = { doc: {}, print: {} };
-  values.doc = await getPrintTemplateDocValues(doc);
-
-  if (
-    values.doc.entryType === ModelNameEnum.SalesInvoice ||
-    values.doc.entryType === ModelNameEnum.PurchaseInvoice
-  ) {
-    paymentId = await (doc as SalesInvoice).getPaymentIds();
-
-    if (paymentId && paymentId.length) {
-      const paymentDetails = await getPaymentDetails(doc, paymentId);
-      (values.doc as PrintTemplateData).paymentDetails = paymentDetails;
-    }
-  }
-
-  if (doc.referenceType == ModelNameEnum.SalesInvoice) {
-    const referenceName = (doc as Payment)?.for![0]?.referenceName;
-
-    if (referenceName) {
-      sinvDoc = await fyo.doc.getDoc(ModelNameEnum.SalesInvoice, referenceName);
-
-      if (sinvDoc.taxes) {
-        (values.doc as PrintTemplateData).taxes = sinvDoc.taxes;
-      }
-    }
-  }
-
-  let totalTax;
-
-  if (values.doc.entryType !== ModelNameEnum.Shipment) {
-    totalTax = await ((sinvDoc as Invoice) ?? (doc as Payment))?.getTotalTax();
-  }
-
-  if (doc.schema.name == ModelNameEnum.Payment) {
-    (values.doc as PrintTemplateData).amountPaidInWords = getGrandTotalInWords(
-      (doc.amountPaid as Money)?.float
-    );
-  }
-
-  (values.doc as PrintTemplateData).subTotal = doc.fyo.format(
-    ((doc.grandTotal as Money) ?? (doc.amount as Money)).sub(totalTax || 0),
-    ModelNameEnum.Currency
-  );
-
-  const printSettings = await fyo.doc.getDoc(ModelNameEnum.PrintSettings);
-  const printValues = await getPrintTemplateDocValues(
+  const printSettings = await doc.fyo.doc.getDoc(ModelNameEnum.PrintSettings);
+  const print = await getPrintTemplateDocValues(
     printSettings,
     printSettingsFields
   );
-
-  const accountingSettings = await fyo.doc.getDoc(
-    ModelNameEnum.AccountingSettings
-  );
-  const accountingValues = await getPrintTemplateDocValues(
-    accountingSettings,
-    accountingSettingsFields
-  );
-
-  values.print = {
-    ...printValues,
-    ...accountingValues,
-  };
-  const discountSchema = ['Invoice', 'Quote'];
-  if (discountSchema.some((value) => doc.schemaName?.endsWith(value))) {
-    (values.doc as PrintTemplateData).totalDiscount =
-      formattedTotalDiscount(doc);
+  if (doc.schemaName === 'Party') {
+    const values = await getStatementValues(
+      doc,
+      statementRange.from,
+      statementRange.to
+    );
+    return {
+      doc: {
+        ...values,
+        totalInWords: wordsWithCurrency(values.closingAmount, doc.fyo),
+      },
+      print,
+    } as PrintValues;
   }
-
-  (values.doc as PrintTemplateData).grandTotalInWords = getGrandTotalInWords(
-    ((doc.grandTotal as Money) ?? (doc.amount as Money)).float
-  );
-
-  (values.doc as PrintTemplateData).date = getDate(doc.date as string);
-
-  if (printSettings.displayTime) {
-    (values.doc as PrintTemplateData).time = getTime(doc.date as string);
-  }
-
-  if (printSettings.displayDescription) {
-    (values.doc as PrintTemplateData).description = showDescription(doc);
-  }
-
-  return values;
-}
-async function getPaymentDetails(doc: Doc, paymentId: string[]) {
-  const paymentIds = paymentId.sort();
-  const paymentDetails = [];
-  let outstandingAmount = doc.grandTotal as Money;
-
-  for (const payment of paymentIds) {
-    const paymentDoc = await doc.fyo.doc.getDoc(ModelNameEnum.Payment, payment);
-    outstandingAmount = outstandingAmount.sub(paymentDoc.amount as Money);
-
-    paymentDetails.push({
-      amount: doc.fyo.format(paymentDoc.amount, ModelNameEnum.Currency),
-      amountPaid: doc.fyo.format(paymentDoc.amountPaid, ModelNameEnum.Currency),
-      paymentMethod: paymentDoc.paymentMethod as string,
-      outstandingAmount: doc.fyo.format(
-        outstandingAmount,
-        ModelNameEnum.Currency
-      ),
-    });
-  }
-
-  return paymentDetails;
+  const values = await getPrintTemplateDocValues(doc);
+  if (doc instanceof Invoice)
+    values.totalDiscount = formattedTotalDiscount(doc);
+  await addStandardDocumentValues(doc, values);
+  const total = (doc.grandTotal ?? doc.amountPaid ?? doc.amount) as
+    | Money
+    | undefined;
+  if (total)
+    values.totalInWords = wordsWithCurrency(Math.abs(total.float), doc.fyo);
+  if (printSettings.displayTime && doc.date)
+    values.time = getTime(String(doc.date));
+  return { doc: values, print };
 }
 
-function getDate(dateString: string): string {
-  const date = new Date(dateString);
-  date.setMonth(date.getMonth());
-
-  return `${date.toLocaleString('default', {
-    month: 'short',
-  })} ${date.getDate()}, ${date.getFullYear()}`;
+function wordsWithCurrency(total: number, fyo: Fyo) {
+  const currency = String(fyo.singles.SystemSettings?.currency || '');
+  const name =
+    (
+      { BDT: 'Taka', INR: 'Rupees', USD: 'Dollars', EUR: 'Euros' } as Record<
+        string,
+        string
+      >
+    )[currency] || currency;
+  return getGrandTotalInWords(total).replace(/ only$/i, ` ${name} Only`);
 }
 
 function getTime(dateString: string): string {
@@ -311,13 +226,6 @@ function getGrandTotalInWords(total: number) {
   }
 
   return `${spelledOutInteger}${spelledOutDecimal} ${t`only`}`;
-}
-
-function showDescription(doc: Doc): boolean {
-  const description = Array.isArray(doc.items)
-    ? doc.items.map((item: Doc) => item.description).filter(Boolean)
-    : [];
-  return description.length > 0;
 }
 
 function formattedTotalDiscount(doc: Doc): string {
@@ -492,7 +400,7 @@ function constructPrintDocument(innerHTML: string) {
       }
 
       @page {
-        margin: 0;
+        margin: 8mm;
       }
 
       * {
@@ -533,111 +441,12 @@ function getAllCSSAsStyleElem() {
 }
 
 export async function updatePrintTemplates(fyo: Fyo) {
-  const templateFiles = await ipc.getTemplates(
-    fyo.singles.PrintSettings?.posPrintWidth as number
+  const files = await ipc.getTemplates();
+  const standard = files.find(
+    (file) => file.file === 'Nivo Standard.All.template.html'
   );
-  const existingTemplates = (await fyo.db.getAll(ModelNameEnum.PrintTemplate, {
-    fields: ['name', 'modified'],
-    filters: { isCustom: false },
-  })) as { name: string; modified: Date }[];
-
-  const nameModifiedMap = getValueMapFromList(
-    existingTemplates,
-    'name',
-    'modified'
-  );
-
-  const updateList: TemplateUpdateItem[] = [];
-  for (const templateFile of templateFiles) {
-    const updates = getPrintTemplateUpdateList(
-      templateFile,
-      nameModifiedMap,
-      fyo
-    );
-
-    updateList.push(...updates);
-  }
-
-  const isLogging = fyo.store.skipTelemetryLogging;
-  fyo.store.skipTelemetryLogging = true;
-  for (const { name, type, template, width, height } of updateList) {
-    const doc = await getDocFromNameIfExistsElseNew(
-      ModelNameEnum.PrintTemplate,
-      name
-    );
-
-    const updateData = {
-      name,
-      type,
-      template,
-      isCustom: false,
-      ...(width ? { width } : {}),
-      ...(height ? { height } : {}),
-    };
-
-    await doc.set(updateData);
-    await doc.sync();
-  }
-  fyo.store.skipTelemetryLogging = isLogging;
-}
-
-function getPrintTemplateUpdateList(
-  { file, template, modified: modifiedString, width, height }: TemplateFile,
-  nameModifiedMap: Record<string, Date>,
-  fyo: Fyo
-): TemplateUpdateItem[] {
-  const templateList: TemplateUpdateItem[] = [];
-  const dbModified = new Date(modifiedString);
-
-  for (const { name, type } of getNameAndTypeFromTemplateFile(file, fyo)) {
-    const fileModified = nameModifiedMap[name];
-    if (fileModified && dbModified.valueOf() <= fileModified.valueOf()) {
-      continue;
-    }
-
-    templateList.push({
-      height,
-      width,
-      name,
-      type,
-      template,
-    });
-  }
-  return templateList;
-}
-
-function getNameAndTypeFromTemplateFile(
-  file: string,
-  fyo: Fyo
-): { name: string; type: string }[] {
-  /**
-   * Template File Name Format:
-   * TemplateName[.SchemaName].template.html
-   *
-   * If the SchemaName is absent then it is assumed
-   * that the SchemaName is:
-   * - SalesInvoice
-   * - SalesQuote
-   * - PurchaseInvoice
-   */
-
-  const fileName = file.split('.template.html')[0];
-  const name = fileName.split('.')[0];
-  const schemaName = fileName.split('.')[1];
-
-  if (schemaName) {
-    const label = fyo.schemaMap[schemaName]?.label ?? schemaName;
-    return [{ name: `${name} - ${label}`, type: schemaName }];
-  }
-
-  return [
-    ModelNameEnum.SalesInvoice,
-    ModelNameEnum.SalesQuote,
-    ModelNameEnum.PurchaseInvoice,
-  ].map((schemaName) => {
-    const label = fyo.schemaMap[schemaName]?.label ?? schemaName;
-    return { name: `${name} - ${label}`, type: schemaName };
-  });
+  if (!standard) throw new Error('Nivo Standard print template is missing.');
+  await migrateStandardPrint(fyo, standard.template);
 }
 
 export const baseTemplate = `<main class="h-full w-full bg-white">

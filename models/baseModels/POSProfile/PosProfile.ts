@@ -1,3 +1,4 @@
+import { printTemplateFilter } from 'utils/standardPrint';
 import { Doc } from 'fyo/model/doc';
 import { FiltersMap } from 'fyo/model/types';
 import { ModelNameEnum } from 'models/types';
@@ -17,6 +18,6 @@ export class POSProfile extends Doc {
   ignorePricingRule?: boolean;
 
   static filters: FiltersMap = {
-    posPrintTemplate: () => ({ type: ModelNameEnum.SalesInvoice }),
+    posPrintTemplate: () => printTemplateFilter(ModelNameEnum.SalesInvoice),
   };
 }

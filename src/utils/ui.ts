@@ -1,3 +1,4 @@
+import { printableTypes, printTemplateFilter } from 'utils/standardPrint';
 /**
  * Utils to do UI stuff such as opening dialogs, toasts, etc.
  * Basically anything that may directly or indirectly import a Vue file.
@@ -420,8 +421,9 @@ export async function getDocFromNameIfExistsElseNew(
 }
 
 export async function isPrintable(schemaName: string) {
+  if (!printableTypes.includes(schemaName)) return false;
   const numTemplates = await fyo.db.count(ModelNameEnum.PrintTemplate, {
-    filters: { type: schemaName },
+    filters: printTemplateFilter(schemaName),
   });
   return numTemplates > 0;
 }

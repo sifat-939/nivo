@@ -1,0 +1,213 @@
+<main class="nivo-standard-print" :style="{fontFamily: print.font || 'Arial'}">
+  <header
+    style="display: flex; align-items: center; gap: 12px; margin-bottom: 32px"
+  >
+    <img
+      v-if="print.displayLogo && print.logo"
+      :src="print.logo"
+      alt="Company logo"
+      style="width: 58px; height: 58px; object-fit: contain"
+    />
+    <div style="flex: 1; min-width: 0">
+      <h1
+        style="
+          font-size: 21px;
+          font-weight: 700;
+          line-height: 1.25;
+          margin: 0 0 10px;
+        "
+      >
+        {{print.companyName}}
+      </h1>
+      <p v-if="print.phone || print.email" style="margin-bottom: 10px">
+        {{print.phone}}<span v-if="print.phone && print.email"> · </span
+        >{{print.email}}
+      </p>
+      <p style="white-space: pre-line">
+        {{print.links?.address?.addressDisplay || ''}}
+      </p>
+    </div>
+  </header>
+  <h2
+    style="
+      font-size: 23px;
+      text-align: center;
+      font-weight: 700;
+      margin: 0 0 34px;
+    "
+  >
+    {{doc.printTitle}}
+  </h2>
+  <p
+    v-if="doc.printStatus"
+    style="text-align: center; font-weight: 700; margin: -24px 0 20px"
+  >
+    {{doc.printStatus}}
+  </p>
+  <section
+    style="display: flex; gap: 20px; margin-bottom: 32px; font-size: 13px"
+  >
+    <div style="flex: 1; min-width: 0">
+      <div class="nivo-print-meta">
+        <span>Party:</span><strong>{{doc.party || doc.name}}</strong>
+      </div>
+      <div v-if="doc.partyAddress" class="nivo-print-meta">
+        <span>Address:</span
+        ><strong style="white-space: pre-line">{{doc.partyAddress}}</strong>
+      </div>
+      <div v-if="doc.balanceLabel" class="nivo-print-meta">
+        <span>Balance:</span><strong>{{doc.balanceLabel}}</strong>
+      </div>
+    </div>
+    <div style="width: 42%; min-width: 0">
+      <template v-if="doc.isStatement">
+        <div class="nivo-print-meta">
+          <span>From:</span><strong>{{doc.fromDate || 'Beginning'}}</strong>
+        </div>
+        <div class="nivo-print-meta">
+          <span>To:</span><strong>{{doc.toDate || 'Today'}}</strong>
+        </div>
+        <div class="nivo-print-meta">
+          <span>Currency:</span><strong>{{doc.currency}}</strong>
+        </div>
+      </template>
+      <template v-else>
+        <div class="nivo-print-meta">
+          <span>{{doc.numberLabel}}:</span><strong>{{doc.name}}</strong>
+        </div>
+        <div class="nivo-print-meta">
+          <span>{{ doc.dateLabel || 'Date' }}:</span
+          ><strong>{{doc.date}}</strong>
+        </div>
+        <div v-if="doc.paymentMode" class="nivo-print-meta">
+          <span>Payment Mode:</span><strong>{{doc.paymentMode}}</strong>
+        </div>
+        <div v-if="doc.returnAgainst" class="nivo-print-meta">
+          <span>Return Against:</span><strong>{{doc.returnAgainst}}</strong>
+        </div>
+      </template>
+    </div>
+  </section>
+  <table class="nivo-print-table">
+    <thead>
+      <tr>
+        <th
+          v-for="column in doc.printColumns"
+          :key="column.key"
+          :style="{textAlign: column.align || 'left', width:column.width}"
+        >
+          {{column.label}}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="(row,i) in doc.printRows" :key="i">
+        <td
+          v-for="column in doc.printColumns"
+          :key="column.key"
+          :style="{textAlign:column.align || 'left'}"
+        >
+          {{row[column.key]}}
+        </td>
+      </tr>
+      <tr v-if="!doc.printRows?.length">
+        <td
+          :colspan="doc.printColumns?.length"
+          style="text-align: center; padding: 20px"
+        >
+          No transactions in this period.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <section
+    style="
+      display: flex;
+      gap: 28px;
+      margin-top: 30px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    "
+  >
+    <div style="flex: 1; min-width: 0">
+      <template v-if="doc.totalInWords">
+        <h3 class="nivo-print-label">Amount in Words</h3>
+        <p style="margin: 12px 0 26px">{{doc.totalInWords}}</p>
+      </template>
+      <template
+        v-if="doc.terms || (print.displaytermsandconditions && print.termsAndConditions)"
+      >
+        <h3 class="nivo-print-label">Terms &amp; Conditions</h3>
+        <p style="margin-top: 12px; white-space: pre-line">
+          {{doc.terms || print.termsAndConditions}}
+        </p>
+      </template>
+    </div>
+    <div
+      style="min-width: 220px"
+      :style="{width: doc.isStatement ? '47%' : '34%'}"
+    >
+      <div
+        v-for="(total,i) in doc.printTotals"
+        :key="i"
+        style="
+          display: flex;
+          justify-content: space-between;
+          gap: 14px;
+          padding: 10px 0;
+        "
+        :style="total.emphasis ? {borderTop:'1px dotted #888',borderBottom:'1px dotted #888',fontWeight:700,fontSize:'16px'} : {}"
+      >
+        <span>{{total.label}}:</span
+        ><span style="white-space: nowrap">{{total.value}}</span>
+      </div>
+    </div>
+  </section>
+  <footer
+    style="
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 30px;
+      margin-top: 34px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    "
+  >
+    <div v-if="print.paymentQR && doc.showPaymentQR">
+      <h3 class="nivo-print-label" style="margin-bottom: 14px">
+        Scan QR for Payment
+      </h3>
+      <img
+        :src="print.paymentQR"
+        alt="Payment QR"
+        style="width: 125px; height: 125px; object-fit: contain"
+      />
+    </div>
+    <div
+      style="
+        margin-left: auto;
+        width: 155px;
+        text-align: center;
+        padding-top: 24px;
+      "
+    >
+      <img
+        v-if="print.authorizedSignature && !doc.printStatus"
+        :src="print.authorizedSignature"
+        alt="Authorized signature"
+        style="
+          width: 145px;
+          height: 58px;
+          object-fit: contain;
+          margin: 0 auto 20px;
+        "
+      />
+      <div
+        v-else
+        style="height: 58px; margin-bottom: 20px; border-bottom: 1px solid #999"
+      ></div>
+      <strong>Authorized Signature</strong>
+    </div>
+  </footer>
+</main>

@@ -268,3 +268,19 @@ input[type='number']::-webkit-inner-spin-button {
   width: fit-content;
   height: fit-content;
 }
+
+/* Shared A4 invoice / party statement design. All data is Vue-escaped. */
+.nivo-standard-print { color: #111; background: #fff; padding: 8mm; font-size: 13px; line-height: 1.45; }
+.nivo-standard-print p { margin: 0; }
+.nivo-print-label { font-size: 14px; font-weight: 700; }
+.nivo-print-meta { display: grid; grid-template-columns: 108px minmax(0,1fr); gap: 8px; margin: 0 0 12px; overflow-wrap: anywhere; }
+.nivo-print-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; }
+.nivo-print-table th { background: #36b48e !important; color: #fff !important; padding: 13px 10px; font-weight: 700; }
+.nivo-print-table td { padding: 12px 10px; vertical-align: top; overflow-wrap: anywhere; }
+.nivo-print-table th, .nivo-print-table td { border: 1px solid #73737e; }
+.nivo-print-table thead { display: table-header-group; }
+.nivo-print-table tr { break-inside: avoid; page-break-inside: avoid; }
+@media print {
+  .nivo-standard-print { padding: 0 !important; }
+  .nivo-print-table th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

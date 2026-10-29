@@ -47,5 +47,9 @@ export async function getInitializedPrintWindow(
   });
 
   await printWindow.loadFile(printFilePath);
+  await printWindow.webContents.executeJavaScript(`(async () => {
+    await document.fonts.ready;
+    await Promise.all(Array.from(document.images).map(image => image.decode().catch(() => {})));
+  })()`);
   return printWindow;
 }

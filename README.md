@@ -31,13 +31,18 @@ Visit the repository's [Releases](https://github.com/sifat-939/nivo/releases) pa
 - **Modern User Experience:** Minimal transparent Nivo branding, curved UI components, and adaptive Light/Dark mode.
 - **Offline & Private Data:** Local SQLite databases with automated daily backups. No cloud dependency or third-party tracking.
 
+**Printing:** One Nivo Standard A4 design covers invoices and customer/supplier statements. Configure your logo, signature and payment QR in Settings → Print. See [Print Guide](docs/standard-print.md).
+
 ## Development
 
 Requires Node.js **22** and Yarn Classic **1.22.22**.
 
 ```bash
 corepack enable
-yarn install --frozen-lockfile
+yarn install --frozen-lockfile --ignore-scripts
+node node_modules/electron/install.js
+node node_modules/esbuild/install.js
+yarn postinstall
 yarn dev
 ```
 
@@ -84,7 +89,7 @@ The GitHub Actions workflow runs automated test suites, regression checks, and p
 
 **Privacy Notice:** Company databases, private credentials, `.env`, installers, and build caches are strictly excluded from git tracking.
 - Linux company data: `~/.local/share/nivo/data/`
-- Windows company data: `%APPDATA%\nivo\data\`
+- Windows company data: `%APPDATA%\frappe-books\data\`
 
 Downloading builds or uploading source code never transfers or exposes your local company databases. See [Installation & Data Storage](docs/installation.md).
 

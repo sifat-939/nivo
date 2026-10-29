@@ -1,5 +1,5 @@
 {
-  "version": "0.40.1",
+  "version": "0.40.2",
   "synthetic": true,
   "screenshots": [
     "company",
@@ -29,6 +29,7 @@
     "balance-sheet",
     "trial-balance",
     "print",
+    "statement",
     "settings",
     "features",
     "feature-help",

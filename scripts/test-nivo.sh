@@ -10,6 +10,7 @@ export TEST_DB_PATH=:memory:
 exec ./node_modules/.bin/electron --require ts-node/register --require tsconfig-paths/register \
   ./node_modules/.bin/tape \
   tests/testSetupInstance.spec.ts \
+  tests/testStandardPrint.spec.ts \
   src/utils/tests/testAuditFollowup.spec.ts \
   tests/testHRAccounting.spec.ts \
   models/baseModels/tests/testInvoice.spec.ts \

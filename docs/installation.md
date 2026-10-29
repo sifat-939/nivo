@@ -3,7 +3,7 @@
 Linux-এ বিল্ড তৈরি হওয়ার পর Nivo বন্ধ করে চালান:
 
 ```bash
-python3 scripts/install-linux.py dist_electron/bundled/Nivo-v0.40.1-linux-x86_64.AppImage
+python3 scripts/install-linux.py dist_electron/bundled/Nivo-v0.40.2-linux-x86_64.AppImage
 ```
 
 অ্যাপ মেনুতে **Nivo** নামে পাওয়া যাবে। পরের বিল্ড ইনস্টল করতেও একই স্ক্রিপ্ট ব্যবহার করুন।

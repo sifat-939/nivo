@@ -151,6 +151,18 @@
       "label": "Terms and Conditions",
       "fieldtype": "Text",
       "section": "Customizations"
+    },
+    {
+      "fieldname": "authorizedSignature",
+      "label": "Authorized Signature",
+      "fieldtype": "AttachImage",
+      "section": "Signature & Payment"
+    },
+    {
+      "fieldname": "paymentQR",
+      "label": "Payment QR",
+      "fieldtype": "AttachImage",
+      "section": "Signature & Payment"
     }
   ]
 }

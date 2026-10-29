@@ -30,7 +30,9 @@ export class PrintTemplate extends Doc {
           fieldtype: 'AutoComplete',
           fieldname: 'type',
           display(value) {
-            return fyo.schemaMap[value as string]?.label ?? '';
+            return value === 'All'
+              ? fyo.t`All Documents`
+              : fyo.schemaMap[value as string]?.label ?? '';
           },
         },
         'isCustom',
@@ -62,10 +64,16 @@ export class PrintTemplate extends Doc {
         ModelNameEnum.StockMovement,
       ];
 
-      return models.map((value) => ({
-        value,
-        label: schemaMap[value]?.label ?? value,
-      }));
+      return [
+        {
+          value: 'All',
+          label: doc ? doc.fyo.t`All Documents` : 'All Documents',
+        },
+        ...models.map((value) => ({
+          value,
+          label: schemaMap[value]?.label ?? value,
+        })),
+      ];
     },
   };
 

@@ -1,4 +1,5 @@
 import { DefaultCashDenominations } from 'models/inventory/Point of Sale/DefaultCashDenominations';
+import { printTemplateFilter } from 'utils/standardPrint';
 import { Doc } from 'fyo/model/doc';
 import { FiltersMap, HiddenMap } from 'fyo/model/types';
 import { ModelNameEnum } from 'models/types';
@@ -83,19 +84,21 @@ export class Defaults extends Doc {
       referenceType: ModelNameEnum.PurchaseReceipt,
     }),
     // Print Templates
-    salesQuotePrintTemplate: () => ({ type: ModelNameEnum.SalesQuote }),
-    salesInvoicePrintTemplate: () => ({ type: ModelNameEnum.SalesInvoice }),
-    posPrintTemplate: () => ({ type: ModelNameEnum.SalesInvoice }),
-    purchaseInvoicePrintTemplate: () => ({
-      type: ModelNameEnum.PurchaseInvoice,
-    }),
-    journalEntryPrintTemplate: () => ({ type: ModelNameEnum.JournalEntry }),
-    paymentPrintTemplate: () => ({ type: ModelNameEnum.Payment }),
-    shipmentPrintTemplate: () => ({ type: ModelNameEnum.Shipment }),
-    purchaseReceiptPrintTemplate: () => ({
-      type: ModelNameEnum.PurchaseReceipt,
-    }),
-    stockMovementPrintTemplate: () => ({ type: ModelNameEnum.StockMovement }),
+    salesQuotePrintTemplate: () =>
+      printTemplateFilter(ModelNameEnum.SalesQuote),
+    salesInvoicePrintTemplate: () =>
+      printTemplateFilter(ModelNameEnum.SalesInvoice),
+    posPrintTemplate: () => printTemplateFilter(ModelNameEnum.SalesInvoice),
+    purchaseInvoicePrintTemplate: () =>
+      printTemplateFilter(ModelNameEnum.PurchaseInvoice),
+    journalEntryPrintTemplate: () =>
+      printTemplateFilter(ModelNameEnum.JournalEntry),
+    paymentPrintTemplate: () => printTemplateFilter(ModelNameEnum.Payment),
+    shipmentPrintTemplate: () => printTemplateFilter(ModelNameEnum.Shipment),
+    purchaseReceiptPrintTemplate: () =>
+      printTemplateFilter(ModelNameEnum.PurchaseReceipt),
+    stockMovementPrintTemplate: () =>
+      printTemplateFilter(ModelNameEnum.StockMovement),
     posCustomer: () => ({ role: PartyRoleEnum.Customer }),
   };
 

@@ -195,6 +195,11 @@ const { execFileSync } = require('node:child_process');
     await capture('trial-balance', '/report/TrialBalance', 'Trial Balance');
     await capture('print', '/print/SalesInvoice/' + names.sale, 'Save as PDF');
     await capture(
+      'statement',
+      '/print/Party/Rafiq%20Store',
+      'Account Statement'
+    );
+    await capture(
       'settings',
       '/settings?tab=AccountingSettings',
       'Company Name'
@@ -271,7 +276,7 @@ const { execFileSync } = require('node:child_process');
     fs.writeFileSync(
       path.join(root, 'docs/user-guide/screenshots.json'),
       JSON.stringify(
-        { version: '0.40.1', synthetic: true, screenshots: manifest },
+        { version: '0.40.2', synthetic: true, screenshots: manifest },
         null,
         2
       ) + '\n'
