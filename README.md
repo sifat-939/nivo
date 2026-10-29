@@ -1,70 +1,88 @@
 <div align="center">
 
-  <img src="src/assets/brand/nivo-logo.png" alt="Nivo Logo" width="130" />
+  <br />
+  <img src="src/assets/brand/nivo-logo.png" alt="Nivo" width="110" height="110" />
+  <br /><br />
 
   # Nivo
 
-  **Privacy-First, Offline Desktop Accounting Application for Small Businesses & Freelancers**
+  <p><strong>The modern, offline-first desktop accounting suite crafted for velocity, elegance, and sovereign data privacy.</strong></p>
+  <p><em>Built on Electron & Vue 3 • Powered by Embedded SQLite • Zero Cloud Dependencies</em></p>
+
+  <br />
 
   <p>
-    <a href="https://github.com/sifat-939/nivo/releases/latest"><img src="https://img.shields.io/github/v/release/sifat-939/nivo?style=flat-square&color=2563eb&label=latest%20release" alt="Latest Release"></a>
-    <a href="https://github.com/sifat-939/nivo/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-10b981?style=flat-square" alt="License"></a>
-    <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux-6366f1?style=flat-square" alt="Platform Support">
-    <img src="https://img.shields.io/badge/database-100%25%20Offline%20SQLite-0284c7?style=flat-square" alt="Offline SQLite">
-    <img src="https://img.shields.io/badge/stack-Electron%20%7C%20Vue%20%7C%20TypeScript-f59e0b?style=flat-square" alt="Tech Stack">
+    <a href="https://github.com/sifat-939/nivo/releases/latest"><img src="https://img.shields.io/github/v/release/sifat-939/nivo?style=for-the-badge&color=0f172a&labelColor=1e293b&logo=github&label=RELEASE" alt="Release" /></a>
+    &nbsp;
+    <img src="https://img.shields.io/badge/PLATFORM-WINDOWS%20%7C%20LINUX-0f172a?style=for-the-badge&labelColor=1e293b&logo=windows" alt="Platform" />
+    &nbsp;
+    <a href="LICENSE"><img src="https://img.shields.io/badge/LICENSE-AGPL--3.0-0f172a?style=for-the-badge&labelColor=1e293b" alt="License" /></a>
+    &nbsp;
+    <img src="https://img.shields.io/badge/DATA-100%25%20OFFLINE%20SQLITE-0f172a?style=for-the-badge&labelColor=1e293b&logo=sqlite" alt="SQLite" />
   </p>
 
   <p>
-    <a href="#-download--installation">Download</a> •
-    <a href="#-key-features">Key Features</a> •
-    <a href="#-why-nivo">Why Nivo?</a> •
-    <a href="#-user-guide--documentation">User Guide</a> •
-    <a href="#-tech-stack">Tech Stack</a> •
-    <a href="#-development">Development</a> •
-    <a href="#-license--attribution">License</a>
+    <a href="#-downloads"><strong>Get Nivo</strong></a> &nbsp;•&nbsp;
+    <a href="#-the-nivo-philosophy"><strong>Philosophy</strong></a> &nbsp;•&nbsp;
+    <a href="#-core-modules"><strong>Features</strong></a> &nbsp;•&nbsp;
+    <a href="#-bengali-user-guide"><strong>Documentation</strong></a> &nbsp;•&nbsp;
+    <a href="#-engineering--architecture"><strong>Architecture</strong></a> &nbsp;•&nbsp;
+    <a href="#-license--attribution"><strong>License</strong></a>
   </p>
 
-  <br>
+  <br />
 
-  <!-- Dynamic Light / Dark Mode Hero Screenshot -->
+  <!-- Adaptive Light/Dark Mode Hero Showcase -->
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nivo-dashboard-dark.png">
     <source media="(prefers-color-scheme: light)" srcset="docs/assets/nivo-dashboard.png">
-    <img alt="Nivo Financial Dashboard Preview" src="docs/assets/nivo-dashboard.png" width="92%" style="border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+    <img alt="Nivo Interactive Dashboard Preview" src="docs/assets/nivo-dashboard.png" width="94%" style="border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 20px 45px -15px rgba(0,0,0,0.5);">
   </picture>
 
-  <p><em>Modern interactive dashboard with real-time cash flow, invoicing progress, and expense analytics.</em></p>
+  <p><sub><em>Interactive Financial Dashboard featuring real-time cash flow monitoring, invoice tracking, and expense analytics.</em></sub></p>
 
 </div>
 
 ---
 
-## 💡 Why Nivo?
+## ⚡ The Nivo Philosophy
 
-Nivo is a modern, standalone desktop accounting suite built for business owners who want complete ownership over their financial data. It combines the bookkeeping precision of Frappe Books with an upgraded, minimal user experience and full offline autonomy.
+Most business accounting software today is slow, bloated with unused features, and locked behind recurring monthly subscriptions and invasive telemetry.
 
-- ⚡ **100% Offline-First:** Operates entirely on your local machine. No mandatory internet connection, no forced cloud accounts, and zero monthly SaaS subscriptions.
-- 🔒 **Absolute Data Privacy:** Your invoices, customer records, and ledger balances live in an isolated local SQLite database (`.db`). You control your data.
-- 💼 **Double-Entry Bookkeeping:** Built-in General Ledger, Chart of Accounts, Invoicing, Payment Allocations, and automatic balancing compliant with standard accounting principles.
-- 👥 **HR & Payroll Module:** Manage employee profiles, record monthly salary payments, and prevent duplicate disbursements with unique period safeguards.
-- 🛡️ **Automated Daily Backups:** Timestamped database backups are automatically maintained in a dedicated local directory upon closing or connecting.
-- 🌓 **Sleek Light & Dark Themes:** Carefully crafted UI with smooth curves, clean typography, and full dark mode support.
+**Nivo takes an uncompromising stance:**
+
+<table width="100%">
+  <tr>
+    <td width="33.3%" valign="top">
+      <h3>🔒 Sovereign Data</h3>
+      <p>Your financial ledger belongs to you alone. All invoices, vouchers, and transactions live strictly on your machine in an isolated, portable SQLite file (<code>.db</code>). No cloud servers, no third-party telemetry, no vendor lock-in.</p>
+    </td>
+    <td width="33.3%" valign="top">
+      <h3>⚡ Instant Velocity</h3>
+      <p>Experience zero-latency desktop responsiveness. With instant page switches, minimal RAM overhead, and seamless keyboard navigation, Nivo is crafted for rapid everyday bookkeeping.</p>
+    </td>
+    <td width="33.3%" valign="top">
+      <h3>🛡️ Autonomous Continuity</h3>
+      <p>Zero mandatory accounts, zero internet requirements, and no subscriptions. Automatically maintains timestamped daily backups on your device so your business never misses a beat.</p>
+    </td>
+  </tr>
+</table>
 
 ---
 
-## 📥 Download & Installation
+## 📥 Downloads
 
-Binaries for the latest stable version are available on the [**GitHub Releases Page**](https://github.com/sifat-939/nivo/releases/latest).
+Ready-to-run release packages for 64-bit systems are available on the [**GitHub Releases Portal**](https://github.com/sifat-939/nivo/releases/latest).
 
-| Operating System | Package | Description | Direct Download |
-|---|---|---|:---:|
-| **Windows 10 / 11 (64-bit)** | Standard Setup (`.exe`) | Recommended installer. Adds Desktop and Start menu shortcuts. | [Download Setup](https://github.com/sifat-939/nivo/releases/download/v0.40.1/Nivo-v0.40.1-windows-x64-setup.exe) |
-| **Windows 10 / 11 (64-bit)** | Portable (`.exe`) | Runs directly without installation (ideal for USB drives). | [Download Portable](https://github.com/sifat-939/nivo/releases/download/v0.40.1/Nivo-v0.40.1-windows-x64-portable.exe) |
-| **Linux (64-bit)** | AppImage (`.AppImage`) | Single executable for Ubuntu, Debian, Fedora, Arch, etc. | [Download AppImage](https://github.com/sifat-939/nivo/releases/download/v0.40.1/Nivo-v0.40.1-linux-x86_64.AppImage) |
-| **Verification** | Checksum (`SHA256SUMS.txt`) | Cryptographic checksums to verify package authenticity. | [View Checksums](https://github.com/sifat-939/nivo/releases/download/v0.40.1/SHA256SUMS.txt) |
+| Platform / Edition | Target OS | Description | Download |
+|:---|:---:|:---|:---:|
+| **Windows Setup** | Windows 10 / 11 (64-bit) | Standard installer with Desktop icon and Start Menu shortcuts | [**`Nivo-Setup.exe`**](https://github.com/sifat-939/nivo/releases/download/v0.40.1/Nivo-v0.40.1-windows-x64-setup.exe) |
+| **Windows Portable** | Windows 10 / 11 (64-bit) | Zero-install portable executable; ideal for USB sticks or isolated workflows | [**`Nivo-Portable.exe`**](https://github.com/sifat-939/nivo/releases/download/v0.40.1/Nivo-v0.40.1-windows-x64-portable.exe) |
+| **Linux AppImage** | Modern 64-bit Linux | Self-contained executable for Ubuntu, Debian, Fedora, Arch, and more | [**`Nivo.AppImage`**](https://github.com/sifat-939/nivo/releases/download/v0.40.1/Nivo-v0.40.1-linux-x86_64.AppImage) |
+| **Integrity Check** | All Platforms | Cryptographic SHA-256 hashes to verify download authenticity | [**`SHA256SUMS.txt`**](https://github.com/sifat-939/nivo/releases/download/v0.40.1/SHA256SUMS.txt) |
 
-> ℹ️ **Windows SmartScreen Note:**  
-> Since Nivo installers are self-published and not yet signed with a paid corporate EV certificate, Windows may present a standard *"Windows protected your PC"* prompt. Click **"More info"** and then **"Run anyway"** to launch.
+> 💡 **Windows SmartScreen Tip:**  
+> Because Nivo is an open-source, community-distributed build without an enterprise code-signing certificate, Windows SmartScreen may show an *"Unknown Publisher"* warning. Click **"More info"** and then **"Run anyway"** on initial launch.
 
 ### Linux Quick Start
 ```bash
@@ -74,107 +92,149 @@ chmod +x Nivo-v0.40.1-linux-x86_64.AppImage
 
 ---
 
-## 📖 User Guide & Documentation
+## 📖 Bengali User Guide & Visual Walkthrough
 
-We provide a complete, end-to-end visual manual in Bengali tailored for business operators and accountants:
+For business owners, accountants, and operators in Bangladesh, we maintain an extensive, illustrated reference manual:
 
-📄 [**Download Nivo Bengali User Guide (PDF)**](output/pdf/Nivo-Bangla-Guide.pdf)  
-- **58 comprehensive pages** covering 52 practical accounting workflows.
-- Step-by-step visual walkthroughs for invoicing, payment allocations, stock reconciliation, salary disbursement, and financial reporting.
-- Practical daily operational checklists and backup recovery protocols.
-
----
-
-## ✨ Key Features
-
-### 🧾 Invoicing & Billing
-- **Sales Invoices:** Generate standard and tax invoices with instant stock ledger updates.
-- **Purchase Invoices:** Record incoming supplier bills and track outstanding payables.
-- **Payment Entries:** Record incoming and outgoing payments with multi-invoice allocation.
-- **Parties:** Manage customer and supplier ledgers, addresses, and transaction histories.
-
-### 💰 Financial Accounts & Reports
-- **General Ledger & Journal Entries:** Complete double-entry accounting records with debit/credit balance integrity.
-- **Bank & Cash Accounts:** Track cash registers, bank deposits, and transfers.
-- **Financial Statements:** Instant Profit & Loss reports, Balance Sheets, Trial Balances, and Cash Flow summaries.
-- **Print & PDF Export:** Clean standard print templates with customized branding, notes, and terms.
-
-### 👥 HR & Payroll
-- **Employee Management:** Maintain staff directories, designation, and compensation records.
-- **Salary Processing:** Create salary vouchers with automated period-based duplicate locks to prevent double payments.
-
-### ⚙️ Customizable & Modular
-- Enable or disable modules as your business requires via **Settings → Features** (POS, Inventory, HR, Expense tracking).
-- Customize custom fields and print views to fit your regional invoicing requirements.
+<div align="center">
+  <table width="100%">
+    <tr>
+      <td align="center" style="padding: 20px;">
+        <h3>📘 Nivo Bangla Practical User Guide (PDF)</h3>
+        <p><strong>58 comprehensive pages • 52 real-world operational workflows • Complete synthetic screenshot walkthroughs</strong></p>
+        <p>Covers opening balances, sales/purchase voucher creation, payment allocations, salary processing, inventory reconciliation, daily accounting checklists, and automated backup management.</p>
+        <br />
+        <a href="output/pdf/Nivo-Bangla-Guide.pdf"><strong>Download Bengali User Guide (PDF) →</strong></a>
+      </td>
+    </tr>
+  </table>
+</div>
 
 ---
 
-## 🛠️ Tech Stack
+## ✨ Core Modules
 
-Nivo is engineered with a modern, high-performance desktop technology stack:
-
-- **Desktop Framework:** [Electron](https://www.electronjs.org/)
-- **Frontend Architecture:** [Vue.js 3](https://vuejs.org/) with [Tailwind CSS](https://tailwindcss.com/)
-- **Core Language:** [TypeScript](https://www.typescriptlang.org/)
-- **Embedded Database:** [SQLite](https://www.sqlite.org/) (via native Node-SQLite bindings)
-- **Automated Verification:** Playwright & Vitest for packaged UI regression testing
+<table width="100%">
+  <tr>
+    <td width="50%" valign="top">
+      <h3>🧾 Invoicing & Receivables</h3>
+      <ul>
+        <li><b>Sales & Purchase Invoices:</b> Multi-item billing with automated tax calculation, discounts, and real-time inventory ledger posting.</li>
+        <li><b>Payment Allocations:</b> Accurate party ledger settlements, partial payment support, and advance allocations.</li>
+        <li><b>Customer & Supplier Ledgers:</b> Complete transaction histories, balances, and print-ready statement generation.</li>
+      </ul>
+    </td>
+    <td width="50%" valign="top">
+      <h3>📊 Financial Intelligence</h3>
+      <ul>
+        <li><b>Double-Entry General Ledger:</b> Strict debit/credit balance integrity for every posted transaction.</li>
+        <li><b>Bank & Cash Management:</b> Real-time cash registers, bank account reconciliation, and fluid liquidity tracking.</li>
+        <li><b>Standard Financial Statements:</b> Instant Profit & Loss reports, Balance Sheets, Trial Balances, and Cash Flow charts.</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>👥 HR & Payroll Engine</h3>
+      <ul>
+        <li><b>Employee Directory:</b> Staff records, designations, department classifications, and compensation profiles.</li>
+        <li><b>Salary Processing:</b> Monthly salary disbursements with unique period-locking to eliminate duplicate payments.</li>
+        <li><b>Salary Vouchers:</b> Audit-compliant expense vouchers and salary distribution slips.</li>
+      </ul>
+    </td>
+    <td width="50%" valign="top">
+      <h3>⚙️ Customization & Control</h3>
+      <ul>
+        <li><b>Modular Toggles:</b> Adapt the application to your workflow by enabling/disabling modules via <code>Settings → Features</code>.</li>
+        <li><b>Print Layout Designer:</b> Clean standard templates with custom logos, branding headers, tax IDs, and payment terms.</li>
+        <li><b>Adaptive UI:</b> Refined dark and light themes crafted for focus and eye comfort during demanding sessions.</li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
 ---
 
-## 💻 Development & Building
+## 🛠️ Engineering & Architecture
+
+Nivo is engineered using a robust, clean desktop stack:
+
+```
+┌────────────────────────────────────────────────────────┐
+│                      Nivo Desktop                      │
+│             (Electron Multi-Process Bridge)            │
+├──────────────────────────┬─────────────────────────────┤
+│      Frontend Layer      │        Backend Layer        │
+│   • Vue 3 Composition    │   • Node.js Main Process    │
+│   • Tailwind CSS Design  │   • Native IPC Action Demux │
+│   • Reactive Stores      │   • Document State Engine   │
+├──────────────────────────┴─────────────────────────────┤
+│                   Storage & Core Data                  │
+│              • Native SQLite3 Engine                   │
+│              • Strict Double-Entry Schema              │
+│              • Automated Snapshot Backups              │
+└────────────────────────────────────────────────────────┘
+```
+
+- **Runtime:** [Electron](https://www.electronjs.org/)
+- **UI Framework:** [Vue.js 3](https://vuejs.org/) with [Tailwind CSS](https://tailwindcss.com/)
+- **Programming Language:** [TypeScript](https://www.typescriptlang.org/)
+- **Database Engine:** Embedded [SQLite](https://www.sqlite.org/) via native bindings
+- **Testing Suites:** Automated UI regression with Playwright and Vitest
+
+---
+
+## 💻 Local Development
 
 ### Prerequisites
 - **Node.js:** `^22.0.0`
 - **Yarn:** Classic `1.22.22`
 
-### Setup & Local Development
 ```bash
-# Enable Yarn and install dependencies
+# Clone the repository
+git clone https://github.com/sifat-939/nivo.git
+cd nivo
+
+# Enable Yarn and install frozen dependencies
 corepack enable
 yarn install --frozen-lockfile
 
-# Launch Nivo in development mode
+# Start Nivo in local development mode
 yarn dev
 ```
 
-### Quality Assurance & Auditing
+### Verification & Testing
 ```bash
-# Run TypeScript validation
+# Verify TypeScript typing
 yarn typecheck
 
-# Run test suites and security assertions
+# Run test suite
 yarn test:nivo
 
-# Run repository integrity and privacy checker
+# Run security and repository privacy checks
 python3 scripts/check-repository.py
 ```
 
-### Building Distributables
-- **Windows (Setup & Portable):** Run on Windows or via GitHub Actions runner:
-  ```bash
-  yarn build:windows
-  ```
-- **Linux (AppImage):**
-  ```bash
-  yarn build --linux AppImage --x64 --nosign --publish never
-  ```
+### Packaging & Builds
+- **Windows:** `yarn build:windows`
+- **Linux:** `yarn build --linux AppImage --x64 --nosign --publish never`
 
 ---
 
-## 🔐 Security & Data Privacy
+## 🔐 Data Privacy Architecture
 
-Your company data is completely isolated from the application code:
-- **Linux Data Path:** `~/.local/share/nivo/data/`
-- **Windows Data Path:** `%APPDATA%\nivo\data\`
+Nivo strictly separates application binaries from user company data:
+- **Linux Storage:** `~/.local/share/nivo/data/`
+- **Windows Storage:** `%APPDATA%\nivo\data\`
 
-All databases, logs, secrets, and private credentials are excluded from version control via `.gitignore`. Downloading updates, pulling Git code, or building installers never touches or exposes your proprietary accounting data. See [Installation & Data Architecture](docs/installation.md) for details.
+All databases, logs, secrets, and private credentials are excluded from version control via `.gitignore`. Rebuilding the application or pushing changes never touches, transmits, or exposes your proprietary accounting records. See [Installation & Storage Specs](docs/installation.md) for details.
 
 ---
 
 ## 📜 License & Attribution
 
-Nivo is free and open-source software licensed under the **GNU Affero General Public License v3.0** ([AGPL-3.0-only](LICENSE)).
+Nivo is open-source software licensed under the **GNU Affero General Public License v3.0** ([AGPL-3.0-only](LICENSE)).
 
 - **Upstream Project:** Derived from [Frappe Books](https://github.com/frappe/books) created by [Frappe Technologies Pvt. Ltd.](https://frappe.io).
-- All upstream copyrights, trademarks, and [Upstream README](docs/upstream-readme.md) are strictly acknowledged and preserved.
-- Code audits and architecture notes are documented in the [Final Audit Report](docs/final-audit-2026-10-29.md).
+- All upstream copyrights, trademarks, and the original [Upstream README](docs/upstream-readme.md) are fully acknowledged and preserved.
+- Code audits, test coverage, and migration histories are documented in the [Final Audit Report](docs/final-audit-2026-10-29.md).
