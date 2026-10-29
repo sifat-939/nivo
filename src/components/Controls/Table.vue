@@ -171,6 +171,11 @@ export default {
   },
 
   methods: {
+    async flushChanges() {
+      const rows = this.$refs['table-row'] ?? [];
+      const results = await Promise.all(rows.map((row) => row.flushChanges()));
+      return results.every(Boolean);
+    },
     focus() {},
     async addRow() {
       await this.doc.append(this.df.fieldname);

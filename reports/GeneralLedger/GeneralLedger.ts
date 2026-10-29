@@ -197,9 +197,10 @@ export class GeneralLedger extends LedgerReport {
   _getTotalsAndSetBalance(map: GroupedMap) {
     let totalDebit = 0;
     let totalCredit = 0;
+    let runningBalance = 0;
 
     for (const key of map.keys()) {
-      let balance = 0;
+      let balance = this.groupBy === 'none' ? runningBalance : 0;
       let debit = 0;
       let credit = 0;
 
@@ -211,6 +212,7 @@ export class GeneralLedger extends LedgerReport {
         balance += diff;
         entry.balance = balance;
       }
+      runningBalance = balance;
 
       /**
        * Total row incase groupBy is used
@@ -286,7 +288,7 @@ export class GeneralLedger extends LedgerReport {
       { label: t`Salary Payments`, value: 'SalaryPayment' },
     ];
 
-    if (!this.fyo.singles.AccountingSettings?.enableInventory) {
+    if (this.fyo.singles.AccountingSettings?.enableInventory) {
       refTypeOptions.push(
         { label: t`Shipment`, value: 'Shipment' },
         { label: t`Purchase Receipt`, value: 'PurchaseReceipt' }

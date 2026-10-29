@@ -14,6 +14,8 @@ A new model normally needs schema registration in [schemas/schemas.ts](../../sch
 
 Use `sync` for saving and existing submit/cancel lifecycles for posting. Use the parent transaction's nested methods where appropriate; do not independently post the same auto-payment or shipment twice. Test rollbacks and cancellation reversals. PaymentFor allocations refer to a specific invoice; whole payment amounts cannot be duplicated across every referenced bill. Legacy settled/adjusted amounts are not automatically cash received.
 
+For mistakes in submitted documents, use the form's **Correct** action (shown as **Correct Payment** for payments). It asks for confirmation, runs the existing cancellation lifecycle, then opens a duplicate as a new draft. The submitted source remains available for audit and cancellation guards/related-entry rollback still apply. Do not edit submitted ledger values directly. Documents that cannot be cancelled safely have no correction action; correct their source/master data through its normal editable form or resolve the linked document first. Payment corrections reset the unsaved amount, allocations and legacy write-off to zero so the user must enter the intended cash amount. `node uitest/nivo-correction.cjs` covers declined/failed cancellation and a corrected legacy payment.
+
 For schema/migration work, inspect [database manager](../../backend/database/manager.ts), [patch registry](../../backend/patches/index.ts) and current compatibility tests. Use an expendable old-schema fixture and a consistent backup, not a live company.
 
 ## Printing and reports
@@ -31,3 +33,15 @@ The Bengali manual sources are under [docs/user-guide](../user-guide/). If only 
 Keep renderer IPC narrowly scoped. Extend existing validated handlers and grants instead of allowing arbitrary paths. Use synthetic fixtures under the OS temporary directory and never remove a real database during source cleanup.
 
 Before finishing, report what changed, why, checks actually run and remaining limitations. If interrupted, capture the diff's state and next concrete step; the next agent should inspect it before repeating any posting, migration, release or install action.
+
+## Payment validation
+
+Reject disabled partial payments without replacing the entered amount or allocation with the full invoice balance. Test the invoice quick-payment path with a rejected save, retry, enabling partial payments, submit and cancellation on a temporary company.
+
+Quick-edit financial saves must flush blur-based inputs, await pending field validation and stop on field errors. Preserve this for both Save buttons and keyboard shortcuts; `node uitest/nivo-partial-payment.cjs` verifies the real controls with a synthetic company.
+
+## Report balance and statement filters
+
+Party print date controls emit local `Date` values on blur; normalize them with `dateKey` before rebuilding the statement. General Ledger running balances carry across references when Group By is None; explicit groups have separate balances. Inventory reference-type choices follow `AccountingSettings.enableInventory`. Exercise these paths with `node uitest/nivo-standard-print.cjs` and `node uitest/nivo-audit-regression.cjs`.
+
+For parties whose role is Both, derive payment direction from the referenced invoice side and return flag. Verify all four directions, partial submit/cancel and control-account postings with `testPaymentOutstanding.spec.ts`.

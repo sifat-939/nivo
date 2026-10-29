@@ -53,6 +53,8 @@ jobs:
           xvfb-run -a node uitest/nivo-audit-regression.cjs
           xvfb-run -a node uitest/nivo-accounts-hr.cjs
           xvfb-run -a node uitest/nivo-standard-print.cjs
+          xvfb-run -a node uitest/nivo-partial-payment.cjs
+          xvfb-run -a node uitest/nivo-correction.cjs
       - name: Windows packaged startup smoke
         if: runner.os == 'Windows'
         run: node uitest/windows-smoke.cjs

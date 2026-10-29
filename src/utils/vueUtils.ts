@@ -113,7 +113,8 @@ export function useDocShortcuts(
   shortcuts: Shortcuts,
   docRef: DocRef,
   name: string,
-  isMultiple = true
+  isMultiple = true,
+  beforeSave?: () => Promise<boolean>
 ) {
   let context = name;
   if (isMultiple) {
@@ -121,6 +122,9 @@ export function useDocShortcuts(
   }
 
   const syncOrSubmitCallback = async () => {
+    if (beforeSave && !(await beforeSave())) {
+      return;
+    }
     const doc = docRef.value;
     if (!doc) {
       return;

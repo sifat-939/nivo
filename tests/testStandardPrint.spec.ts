@@ -5,6 +5,7 @@ import path from 'path';
 import { compile } from '@vue/compiler-dom';
 import {
   buildStatement,
+  dateKey,
   printTemplateFilter,
   printPreviewType,
 } from 'utils/standardPrint';
@@ -19,6 +20,11 @@ const template = fs.readFileSync(
   path.resolve('templates/Nivo Standard.All.template.html'),
   'utf8'
 );
+test('statement date keys preserve local Date calendar days', (t) => {
+  t.equal(dateKey(new Date(2026, 0, 2, 23, 59)), '2026-01-02');
+  t.equal(dateKey('2026-01-02T23:59:59'), '2026-01-02');
+  t.end();
+});
 test('one standard compiles and accepts invoice / party document selection', (t) => {
   const errors: string[] = [];
   compile(template, {

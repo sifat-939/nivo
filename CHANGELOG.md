@@ -1,3 +1,14 @@
+## 0.40.5 — 2026-10-29
+
+- Preserve entered partial-payment amounts and await pending full/quick-form and invoice-row validation before saving.
+- Add confirmed correction drafts for submitted documents, retaining cancellation/reversal history; payment corrections start with zero amount and allocations.
+- Clarify Payment Amount and keep zero-valued legacy write-offs out of normal payment entry.
+- Correct payment direction for Both-role parties across sales, purchases and returns.
+- Preserve selected Party statement date ranges on date-control blur.
+- Carry General Ledger running balances across ungrouped references and restore inventory reference filters.
+- Protect company databases from export paths using symlink/hard-link aliases; prune daily backups only after creating a verified replacement.
+- Extend packaged payment/correction checks and refresh setup/download documentation.
+
 ## 0.40.4
 
 - Revalidate saved payment balances and invoice status immediately before posting.

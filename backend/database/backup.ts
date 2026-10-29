@@ -104,6 +104,31 @@ export async function createUserBackup(
   }
 }
 
+/** Create a verified daily snapshot before pruning older snapshots. */
+export async function createDailyBackupWithRetention(
+  dbPath: string,
+  destinationFolder: string,
+  maxBackups = 30
+) {
+  const backupPath = await createUserBackup(dbPath, destinationFolder, 'daily');
+  const prefix = `${path.parse(dbPath).name.replace(/\.books$/, '')}_daily_`;
+  const backups = await Promise.all(
+    (
+      await fs.readdir(destinationFolder)
+    )
+      .filter((name) => name.startsWith(prefix) && name.endsWith('.books.db'))
+      .map(async (name) => ({
+        name,
+        mtime: (await fs.stat(path.join(destinationFolder, name))).mtimeMs,
+      }))
+  );
+  backups.sort((a, b) => b.mtime - a.mtime);
+  for (const stale of backups.slice(Math.max(0, maxBackups))) {
+    await fs.remove(path.join(destinationFolder, stale.name));
+  }
+  return backupPath;
+}
+
 /** Create an exact-path, WAL-aware snapshot for a staged restore replacement. */
 export async function createVerifiedSnapshot(
   sourcePath: string,

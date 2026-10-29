@@ -43,7 +43,6 @@ export class Payment extends Transactional {
   referenceType?: ModelNameEnum.SalesInvoice | ModelNameEnum.PurchaseInvoice;
   for?: PaymentFor[];
   _accountsMap?: AccountTypeMap;
-  initialAmount?: Money;
 
   async paymentMethodDoc() {
     return (await this.loadAndGetLink('paymentMethod')) as PaymentMethod;
@@ -531,7 +530,7 @@ export class Payment extends Transactional {
   async beforeSync(): Promise<void> {
     await super.beforeSync();
 
-    for (const row of this.for ?? []) {
+    if (this.for?.length) {
       if (!this.fyo.singles.AccountingSettings?.enablePartialPayment) {
         const amount = (this.writeoff as Money).isZero()
           ? (this.amount as Money)
@@ -540,8 +539,7 @@ export class Payment extends Transactional {
         const totalAmount = this.totalAmount as Money;
         if (amount.lt(totalAmount)) {
           if (this.writeoff?.isZero()) {
-            this.amount = totalAmount;
-            row.amountPaid = this.fyo.pesa(0);
+            // Reject without changing the amount the user actually entered.
             throw new ValidationError(
               this.fyo.t`Enable Partial payment to pay partial amount`
             );
@@ -737,10 +735,27 @@ export class Payment extends Transactional {
             return PaymentTypeEnum.Receive;
           }
         } else if (partyDoc.role === PartyRoleEnum.Both) {
-          if (refDoc?.isSales && refDoc.isReturn) {
-            return PaymentTypeEnum.Pay;
+          if (refDoc) {
+            // A party with both roles can be paid or receive money depending
+            // on which side of the ledger the referenced invoice belongs to.
+            // Returns reverse the ordinary direction.
+            if (refDoc.isSales) {
+              return refDoc.isReturn
+                ? PaymentTypeEnum.Pay
+                : PaymentTypeEnum.Receive;
+            }
+
+            return refDoc.isReturn
+              ? PaymentTypeEnum.Receive
+              : PaymentTypeEnum.Pay;
           } else {
-            return PaymentTypeEnum.Receive;
+            if (outstanding?.isZero() ?? true) {
+              return this.paymentType;
+            }
+
+            return outstanding?.isPositive()
+              ? PaymentTypeEnum.Receive
+              : PaymentTypeEnum.Pay;
           }
         }
 
@@ -798,7 +813,6 @@ export class Payment extends Transactional {
       }
 
       if ((value as Money).gt(this.totalAmount as Money)) {
-        this.amount = this.initialAmount;
         throw new ValidationError(
           this.fyo.t`Payment amount cannot exceed ${this.fyo.format(
             this.totalAmount,
@@ -818,6 +832,9 @@ export class Payment extends Transactional {
 
   hidden: HiddenMap = {
     amountPaid: () => this.writeoff?.isZero() ?? true,
+    // Keep the legacy adjustment field out of the normal payment flow. It
+    // remains visible on existing records that already carry a write-off.
+    writeoff: () => this.writeoff?.isZero() ?? true,
     attachment: () =>
       !(this.attachment || !(this.isSubmitted || this.isCancelled)),
     for: () => !!((this.isSubmitted || this.isCancelled) && !this.for?.length),

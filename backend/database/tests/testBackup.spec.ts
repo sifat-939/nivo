@@ -8,6 +8,7 @@ import {
   createMigrationBackup,
   createUserBackup,
   createVerifiedSnapshot,
+  createDailyBackupWithRetention,
   inspectDatabase,
   reserveMigrationBackupPath,
 } from '../backup';
@@ -62,6 +63,37 @@ test('backup reservation is unique at an identical timestamp', (t) => {
     fs.removeSync(tempDir);
   }
   t.end();
+});
+
+test('failed daily backup keeps snapshots that would otherwise be pruned', async (t) => {
+  const tempDir = await fs.mkdtemp(
+    path.join(os.tmpdir(), 'nivo-daily-backup-test-')
+  );
+  const backupDir = path.join(tempDir, 'backups');
+  const dbPath = path.join(tempDir, 'company.books.db');
+  await fs.ensureDir(backupDir);
+  try {
+    for (let index = 0; index < 31; index++) {
+      await fs.writeFile(
+        path.join(backupDir, `company_daily_old-${index}.books.db`),
+        'existing snapshot'
+      );
+    }
+    let rejected = false;
+    try {
+      await createDailyBackupWithRetention(dbPath, backupDir);
+    } catch {
+      rejected = true;
+    }
+    const retained = (await fs.readdir(backupDir)).filter((name) =>
+      name.startsWith('company_daily_')
+    );
+    t.equal(rejected, true, 'invalid source prevents the new backup');
+    t.equal(retained.length, 31, 'existing snapshots remain intact');
+  } finally {
+    await fs.remove(tempDir);
+    t.end();
+  }
 });
 
 test('migration backups preserve prior same-day snapshots', async (t) => {

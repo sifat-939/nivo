@@ -98,7 +98,7 @@
           :key="n + idx"
         >
           <CommonFormSection
-            ref="section"
+            ref="sections"
             class="p-4"
             :class="
               idx !== 0 && activeGroup.size > 1
@@ -116,10 +116,18 @@
           />
           <div
             v-if="showInvoiceFinancialSummary && n === t`Items`"
-            class="nivo-invoice-summary mx-4 my-3 rounded border dark:border-gray-800 px-4 py-3 text-gray-900 dark:text-gray-100"
+            class="
+              nivo-invoice-summary
+              mx-4
+              my-3
+              text-gray-900
+              dark:text-gray-100
+            "
           >
-            <div class="grid grid-cols-3 gap-4 text-sm">
-              <div>
+            <div class="grid grid-cols-3 gap-2 text-sm">
+              <div
+                class="min-w-0 rounded border dark:border-gray-800 px-3 py-2"
+              >
                 <div class="text-gray-600 dark:text-gray-400">
                   {{ t`Final Amount` }}
                 </div>
@@ -127,7 +135,9 @@
                   {{ formatInvoiceAmount(finalAmount) }}
                 </div>
               </div>
-              <div>
+              <div
+                class="min-w-0 rounded border dark:border-gray-800 px-3 py-2"
+              >
                 <div class="text-gray-600 dark:text-gray-400">
                   {{ t`Settled / Adjusted` }}
                 </div>
@@ -135,21 +145,15 @@
                   {{ formatInvoiceAmount(paidAmount) }}
                 </div>
               </div>
-              <div>
+              <div
+                class="min-w-0 rounded border dark:border-gray-800 px-3 py-2"
+              >
                 <div class="text-gray-600 dark:text-gray-400">{{ t`Due` }}</div>
                 <div class="font-semibold">
                   {{ formatInvoiceAmount(dueAmount) }}
                 </div>
               </div>
             </div>
-            <p
-              v-if="doc?.isSubmitted"
-              class="mt-2 text-xs text-gray-600 dark:text-gray-400"
-            >
-              {{
-                t`Settled / Adjusted is calculated as Final Amount minus Due; it may include payments and legacy adjustments.`
-              }}
-            </p>
           </div>
         </template>
       </div>
@@ -201,11 +205,12 @@
       <Transition name="quickedit">
         <RowEditForm
           v-if="row && !showLinks"
+          ref="rowEditForm"
           :doc="doc"
           :fieldname="row.fieldname"
           :index="row.index"
-          @previous="(i:number) => row!.index = i"
-          @next="(i:number) => row!.index = i"
+          @previous="navigateRowEdit"
+          @next="navigateRowEdit"
           @close="() => (row = null)"
         />
       </Transition>
@@ -276,13 +281,53 @@ export default defineComponent({
   setup() {
     const shortcuts = inject(shortcutsKey);
     const docOrNull = ref(null) as DocRef;
+    const rowEditForm = ref<InstanceType<typeof RowEditForm> | null>(null);
+    const sections = ref<{ flushChanges: () => Promise<boolean> }[]>([]);
+    const errors = ref({} as Record<string, string>);
+    const pendingChanges = ref(Promise.resolve());
+    const flushChanges = async () => {
+      const rowIsValid = await rowEditForm.value?.flushChanges();
+      if (rowIsValid === false) {
+        return false;
+      }
+      const sectionResults = await Promise.all(
+        sections.value.map((section) => section.flushChanges())
+      );
+      if (sectionResults.some((valid) => !valid)) {
+        return false;
+      }
+      const active = document.activeElement;
+      if (
+        active instanceof HTMLElement &&
+        !active.closest('.nivo-quick-edit')
+      ) {
+        active.blur();
+      }
+      let pending: Promise<void>;
+      do {
+        pending = pendingChanges.value;
+        await pending;
+      } while (pending !== pendingChanges.value);
+      return Object.keys(errors.value).length === 0;
+    };
     let context = 'CommonForm';
     if (shortcuts) {
-      context = useDocShortcuts(shortcuts, docOrNull, 'CommonForm', true);
+      context = useDocShortcuts(
+        shortcuts,
+        docOrNull,
+        'CommonForm',
+        true,
+        flushChanges
+      );
     }
 
     return {
       docOrNull,
+      rowEditForm,
+      sections,
+      errors,
+      pendingChanges,
+      flushChanges,
       shortcuts,
       context,
       printButton: ref<InstanceType<typeof Button> | null>(null),
@@ -290,7 +335,6 @@ export default defineComponent({
   },
   data() {
     return {
-      errors: {},
       activeTab: this.t`Default`,
       groupedFields: null,
       isPrintable: false,
@@ -298,7 +342,6 @@ export default defineComponent({
       useFullWidth: false,
       row: null,
     } as {
-      errors: Record<string, string>;
       activeTab: string;
       groupedFields: null | UIGroupedFields;
       isPrintable: boolean;
@@ -513,7 +556,9 @@ export default defineComponent({
           for (const [section, fields] of groups.entries()) {
             const visible = fields.filter(
               ({ fieldname }) =>
-                fieldname !== 'netTotal' && fieldname !== 'outstandingAmount'
+                fieldname !== 'netTotal' &&
+                fieldname !== 'outstandingAmount' &&
+                fieldname !== 'stockNotTransferred'
             );
             if (visible.length) {
               groups.set(section, visible);
@@ -525,11 +570,17 @@ export default defineComponent({
       }
     },
     async sync(useDialog?: boolean) {
+      if (!(await this.flushChanges())) {
+        return;
+      }
       if (await commonDocSync(this.doc, useDialog)) {
         this.updateGroupedFields();
       }
     },
     async submit() {
+      if (!(await this.flushChanges())) {
+        return;
+      }
       if (await commonDocSubmit(this.doc)) {
         this.updateGroupedFields();
       }
@@ -543,6 +594,7 @@ export default defineComponent({
         this.schemaName,
         this.name
       );
+      this.errors = {};
       // Keep historical records readable while blocking disabled new records.
       if (
         isSchemaCreationBlocked(
@@ -577,21 +629,28 @@ export default defineComponent({
         this.row = { index, fieldname };
       }
     },
-    async onValueChange(field: Field, value: DocValue) {
-      const { fieldname } = field;
-      delete this.errors[fieldname];
-
-      try {
-        await this.doc.set(fieldname, value);
-      } catch (err) {
-        if (!(err instanceof Error)) {
-          return;
-        }
-
-        this.errors[fieldname] = getErrorMessage(err, this.doc);
+    async navigateRowEdit(index: number) {
+      if (!(await this.rowEditForm?.flushChanges())) {
+        return;
       }
-
-      this.updateGroupedFields();
+      if (this.row) {
+        this.row.index = index;
+      }
+    },
+    onValueChange(field: Field, value: DocValue) {
+      const { fieldname } = field;
+      this.pendingChanges = this.pendingChanges.then(async () => {
+        delete this.errors[fieldname];
+        try {
+          await this.doc.set(fieldname, value);
+        } catch (err) {
+          if (err instanceof Error) {
+            this.errors[fieldname] = getErrorMessage(err, this.doc);
+          }
+        }
+        this.updateGroupedFields();
+      });
+      return this.pendingChanges;
     },
   },
 });

@@ -111,7 +111,7 @@
     },
     {
       "fieldname": "amount",
-      "label": "Amount",
+      "label": "Payment Amount",
       "fieldtype": "Currency",
       "required": true,
       "section": "Amounts"

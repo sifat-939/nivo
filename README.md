@@ -76,18 +76,18 @@ Ready-to-run release packages for 64-bit systems are available on the [**GitHub 
 
 | Platform / Edition | Target OS | Description | Download |
 |:---|:---:|:---|:---:|
-| **Windows Setup** | Windows 10 / 11 (64-bit) | Standard installer with Desktop icon and Start Menu shortcuts | [**`Nivo-Setup.exe`**](https://github.com/sifat-939/nivo/releases/download/v0.40.1/Nivo-v0.40.1-windows-x64-setup.exe) |
-| **Windows Portable** | Windows 10 / 11 (64-bit) | Zero-install portable executable; ideal for USB sticks or isolated workflows | [**`Nivo-Portable.exe`**](https://github.com/sifat-939/nivo/releases/download/v0.40.1/Nivo-v0.40.1-windows-x64-portable.exe) |
-| **Linux AppImage** | Modern 64-bit Linux | Self-contained executable for Ubuntu, Debian, Fedora, Arch, and more | [**`Nivo.AppImage`**](https://github.com/sifat-939/nivo/releases/download/v0.40.1/Nivo-v0.40.1-linux-x86_64.AppImage) |
-| **Integrity Check** | All Platforms | Cryptographic SHA-256 hashes to verify download authenticity | [**`SHA256SUMS.txt`**](https://github.com/sifat-939/nivo/releases/download/v0.40.1/SHA256SUMS.txt) |
+| **Windows Setup** | Windows 10 / 11 (64-bit) | Standard installer with Desktop icon and Start Menu shortcuts | [**`Nivo-Setup.exe`**](https://github.com/sifat-939/nivo/releases/download/v0.40.5/Nivo-v0.40.5-windows-x64-setup.exe) |
+| **Windows Portable** | Windows 10 / 11 (64-bit) | Zero-install portable executable; ideal for USB sticks or isolated workflows | [**`Nivo-Portable.exe`**](https://github.com/sifat-939/nivo/releases/download/v0.40.5/Nivo-v0.40.5-windows-x64-portable.exe) |
+| **Linux AppImage** | Modern 64-bit Linux | Self-contained executable for Ubuntu, Debian, Fedora, Arch, and more | [**`Nivo.AppImage`**](https://github.com/sifat-939/nivo/releases/download/v0.40.5/Nivo-v0.40.5-linux-x86_64.AppImage) |
+| **Integrity Check** | All Platforms | Cryptographic SHA-256 hashes to verify download authenticity | [**`SHA256SUMS.txt`**](https://github.com/sifat-939/nivo/releases/download/v0.40.5/SHA256SUMS.txt) |
 
 > 💡 **Windows SmartScreen Tip:**  
 > Because Nivo is an open-source, community-distributed build without an enterprise code-signing certificate, Windows SmartScreen may show an *"Unknown Publisher"* warning. Click **"More info"** and then **"Run anyway"** on initial launch.
 
 ### Linux Quick Start
 ```bash
-chmod +x Nivo-v0.40.1-linux-x86_64.AppImage
-./Nivo-v0.40.1-linux-x86_64.AppImage
+chmod +x Nivo-v0.40.5-linux-x86_64.AppImage
+APPIMAGE_EXTRACT_AND_RUN=1 ./Nivo-v0.40.5-linux-x86_64.AppImage
 ```
 
 ---
@@ -119,7 +119,7 @@ For business owners, accountants, and operators in Bangladesh, we maintain an ex
     <td width="50%" valign="top">
       <h3>🧾 Invoicing & Receivables</h3>
       <ul>
-        <li><b>Sales & Purchase Invoices:</b> Multi-item billing with automated tax calculation, discounts, and real-time inventory ledger posting.</li>
+        <li><b>Sales & Purchase Invoices:</b> Multi-item billing with discounts, payment tracking, and optional inventory ledger posting.</li>
         <li><b>Payment Allocations:</b> Accurate party ledger settlements, partial payment support, and advance allocations.</li>
         <li><b>Customer & Supplier Ledgers:</b> Complete transaction histories, balances, and print-ready statement generation.</li>
       </ul>
@@ -146,7 +146,7 @@ For business owners, accountants, and operators in Bangladesh, we maintain an ex
       <h3>⚙️ Customization & Control</h3>
       <ul>
         <li><b>Modular Toggles:</b> Adapt the application to your workflow by enabling/disabling modules via <code>Settings → Features</code>.</li>
-        <li><b>Print Layout Designer:</b> Clean standard templates with custom logos, branding headers, tax IDs, and payment terms.</li>
+        <li><b>Print Layout Designer:</b> Clean standard templates with custom logos, branding headers, signatures, and payment terms.</li>
         <li><b>Adaptive UI:</b> Refined dark and light themes crafted for focus and eye comfort during demanding sessions.</li>
       </ul>
     </td>
@@ -180,7 +180,7 @@ Nivo is engineered using a robust, clean desktop stack:
 - **UI Framework:** [Vue.js 3](https://vuejs.org/) with [Tailwind CSS](https://tailwindcss.com/)
 - **Programming Language:** [TypeScript](https://www.typescriptlang.org/)
 - **Database Engine:** Embedded [SQLite](https://www.sqlite.org/) via native bindings
-- **Testing Suites:** Automated UI regression with Playwright and Vitest
+- **Testing Suites:** Automated UI regression with Playwright and Tape
 
 ---
 
@@ -197,7 +197,10 @@ cd nivo
 
 # Enable Yarn and install frozen dependencies
 corepack enable
-yarn install --frozen-lockfile
+yarn install --frozen-lockfile --ignore-scripts
+node node_modules/electron/install.js
+node node_modules/esbuild/install.js
+yarn postinstall
 
 # Start Nivo in local development mode
 yarn dev

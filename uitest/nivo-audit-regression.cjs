@@ -302,6 +302,43 @@ const { execFileSync } = require('child_process');
       true,
       'arbitrary renderer file writes are rejected'
     );
+    const aliasPath = path.join(run, 'company-export.pdf');
+    fs.symlinkSync(database, aliasPath);
+    await app.evaluate(({ dialog }, aliasPath) => {
+      dialog.showSaveDialog = async () => ({
+        canceled: false,
+        filePath: aliasPath,
+      });
+      dialog.showOpenDialog = async () => ({
+        canceled: false,
+        filePaths: [aliasPath],
+      });
+    }, aliasPath);
+    assert.equal(
+      await page.evaluate(async (aliasPath) => {
+        await ipc.getSaveFilePath({});
+        try {
+          await ipc.saveData('must not replace company data', aliasPath);
+          return false;
+        } catch (error) {
+          return String(error).includes('CannotOverwriteOpenDatabase');
+        }
+      }, aliasPath),
+      true,
+      'approved symlink export cannot replace active company'
+    );
+    assert.equal(
+      await page.evaluate(async () => {
+        try {
+          await ipc.dataToolsSelectBackup();
+          return false;
+        } catch (error) {
+          return String(error).includes('CannotRestoreActiveDatabaseFile');
+        }
+      }),
+      true,
+      'active company alias cannot be selected as a restore snapshot'
+    );
     const backupPath = path.join(
       run,
       'backups',
@@ -387,6 +424,76 @@ const { execFileSync } = require('child_process');
       'Total Income (Credit)',
       'Total Expense (Debit)',
     ]);
+    await go('/report/GeneralLedger');
+    await page.getByText('General Ledger', { exact: true }).first().waitFor();
+    const inventoryFilters = await page.evaluate(() => {
+      function find(v) {
+        if (!v) return;
+        const c = v.component;
+        if (c?.proxy?.report?.reportName === 'general-ledger')
+          return c.proxy.report;
+        if (c) {
+          const match = find(c.subTree);
+          if (match) return match;
+        }
+        for (const child of Array.isArray(v.children) ? v.children : []) {
+          const match = find(child);
+          if (match) return match;
+        }
+      }
+      const report = find(document.querySelector('[data-v-app]')._vnode);
+      const settings = report.fyo.singles.AccountingSettings;
+      const original = settings.enableInventory;
+      try {
+        const options = (enabled) => {
+          settings.enableInventory = enabled;
+          return report
+            .getFilters()
+            .find((field) => field.fieldname === 'referenceType')
+            .options.map((option) => option.value);
+        };
+        const first = { debit: 100, credit: 0 };
+        const second = { debit: 0, credit: 40 };
+        const entries = new Map([
+          ['invoice', [first]],
+          ['payment', [second]],
+        ]);
+        report._getTotalsAndSetBalance.call({ groupBy: 'none' }, entries);
+        const ungroupedBalance = second.balance;
+        report._getTotalsAndSetBalance.call(
+          { groupBy: 'referenceName' },
+          entries
+        );
+        return {
+          enabled: options(true),
+          disabled: options(false),
+          ungroupedBalance,
+          groupedBalance: second.balance,
+        };
+      } finally {
+        settings.enableInventory = original;
+      }
+    });
+    assert.equal(
+      inventoryFilters.ungroupedBalance,
+      60,
+      'ungrouped ledger carries balances across transactions'
+    );
+    assert.equal(
+      inventoryFilters.groupedBalance,
+      -40,
+      'explicit groups keep independent balances'
+    );
+    for (const type of ['Shipment', 'PurchaseReceipt']) {
+      assert.ok(
+        inventoryFilters.enabled.includes(type),
+        'inventory ledger reference filter available'
+      );
+      assert.ok(
+        !inventoryFilters.disabled.includes(type),
+        'inventory ledger reference filter follows feature'
+      );
+    }
     assert.deepEqual(errors, [], 'No renderer exceptions');
     assert.deepEqual(
       await page.evaluate(() =>
@@ -413,6 +520,7 @@ const { execFileSync } = require('child_process');
           'unapproved file write blocked',
           'handled application errors',
           'income-only report',
+          'general ledger cumulative balances and inventory filters',
           'renderer errors',
         ],
       })

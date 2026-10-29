@@ -132,14 +132,17 @@ export default defineComponent({
   setup() {
     const doc = ref(null) as DocRef;
     const shortcuts = inject(shortcutsKey);
+    const form = ref<InstanceType<typeof TwoColumnForm> | null>(null);
 
     let context = 'QuickEditForm';
     if (shortcuts) {
-      context = useDocShortcuts(shortcuts, doc, context, true);
+      context = useDocShortcuts(shortcuts, doc, context, true, async () =>
+        form.value ? !!(await form.value.flushChanges()) : false
+      );
     }
 
     return {
-      form: ref<InstanceType<typeof TwoColumnForm> | null>(null),
+      form,
       doc,
       context,
       shortcuts,
@@ -250,6 +253,9 @@ export default defineComponent({
         return;
       }
 
+      if (!(await this.form?.flushChanges())) {
+        return;
+      }
       await commonDocSync(this.doc);
     },
     async submit() {
@@ -257,6 +263,9 @@ export default defineComponent({
         return;
       }
 
+      if (!(await this.form?.flushChanges())) {
+        return;
+      }
       await commonDocSubmit(this.doc);
     },
     async routeToPrevious() {

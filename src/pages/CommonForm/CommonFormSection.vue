@@ -30,7 +30,7 @@
       >
         <Table
           v-if="field.fieldtype === 'Table'"
-          ref="fields"
+          ref="tables"
           :show-label="true"
           :border="true"
           :df="field"
@@ -91,6 +91,18 @@ export default defineComponent({
     focusOrSelectFormControl(this.doc, this.$refs.nameField);
   },
   methods: {
+    async flushChanges(): Promise<boolean> {
+      const tables = this.$refs.tables as
+        | { flushChanges: () => Promise<boolean> }[]
+        | undefined;
+      if (!Array.isArray(tables)) {
+        return true;
+      }
+      const results = await Promise.all(
+        tables.map((table) => table.flushChanges())
+      );
+      return results.every(Boolean);
+    },
     tableValue(value: unknown): unknown[] {
       if (Array.isArray(value)) {
         return value;

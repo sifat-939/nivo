@@ -65,7 +65,7 @@ import Button from 'src/components/Button.vue';
 import FormHeader from 'src/components/FormHeader.vue';
 import TwoColumnForm from 'src/components/TwoColumnForm.vue';
 import { shortcutsKey } from 'src/utils/injectionKeys';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { inject } from 'vue';
 import { defineComponent } from 'vue';
 
@@ -85,7 +85,10 @@ export default defineComponent({
   },
   emits: ['next', 'previous', 'close'],
   setup() {
-    return { shortcuts: inject(shortcutsKey) };
+    return {
+      shortcuts: inject(shortcutsKey),
+      form: ref<InstanceType<typeof TwoColumnForm> | null>(null),
+    };
   },
   computed: {
     fieldlabel() {
@@ -129,6 +132,15 @@ export default defineComponent({
   },
   unmounted() {
     this.shortcuts?.delete(COMPONENT_NAME);
+  },
+  methods: {
+    async flushChanges(): Promise<boolean> {
+      const form = this.form as
+        | { flushChanges: () => Promise<boolean> }
+        | null
+        | undefined;
+      return (await form?.flushChanges()) ?? true;
+    },
   },
 });
 </script>

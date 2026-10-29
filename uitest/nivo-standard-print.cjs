@@ -232,7 +232,62 @@ const { execFileSync } = require('node:child_process');
         quality: 86,
       });
     // Route controls update opening balance correctly and never edit the ledger.
-    const period = await page.evaluate(async () => {
+    const statementDates = page.locator('input[type="date"]');
+    assert.equal(
+      await statementDates.count(),
+      2,
+      'statement date controls render'
+    );
+    for (const index of [0, 1]) {
+      await statementDates.nth(index).evaluate((input) => {
+        input.value = '2026-10-16';
+        // Exercise Date.vue's actual blur handler and its emitted Date value.
+        input.dispatchEvent(new FocusEvent('blur'));
+      });
+    }
+    await page.waitForFunction(() => {
+      const vm = (() => {
+        function find(node) {
+          if (!node || typeof node !== 'object') return;
+          if (node.component?.proxy?.refreshStatement) return node.component;
+          const result = find(node.component?.subTree);
+          if (result) return result;
+          for (const child of Array.isArray(node.children) ? node.children : []) {
+            const value = find(child);
+            if (value) return value;
+          }
+        }
+        return find(document.querySelector('[data-v-app]')._vnode);
+      })();
+      return (
+        vm?.proxy?.fromDate === '2026-10-16' &&
+        vm?.proxy?.toDate === '2026-10-16' &&
+        vm?.proxy?.values?.doc?.fromDate === '16 Oct 2026'
+      );
+    });
+    const period = await page.evaluate(() => {
+      function find(node) {
+        if (!node || typeof node !== 'object') return;
+        if (node.component?.proxy?.refreshStatement) return node.component;
+        const result = find(node.component?.subTree);
+        if (result) return result;
+        for (const child of Array.isArray(node.children) ? node.children : []) {
+          const value = find(child);
+          if (value) return value;
+        }
+      }
+      return find(document.querySelector('[data-v-app]')._vnode).proxy.values.doc;
+    });
+    assert.equal(period.printRows.length, 2);
+    assert.ok(period.printRows[0].balance.includes('1,200.00'));
+    assert.ok(period.printRows[1].balance.includes('700.00'));
+    for (const index of [0, 1]) {
+      await statementDates.nth(index).evaluate((input) => {
+        input.value = '';
+        input.dispatchEvent(new FocusEvent('blur'));
+      });
+    }
+    await page.waitForFunction(() => {
       function find(node) {
         if (!node || typeof node !== 'object') return;
         if (node.component?.proxy?.refreshStatement) return node.component;
@@ -244,14 +299,13 @@ const { execFileSync } = require('node:child_process');
         }
       }
       const vm = find(document.querySelector('[data-v-app]')._vnode);
-      if (!vm) throw new Error('PrintView not found');
-      await vm.proxy.setStatementFrom('2026-10-16');
-      await vm.proxy.setStatementTo('2026-10-16');
-      return vm.proxy.values.doc;
+      const today = new Date();
+      const key = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(
+        2,
+        '0'
+      )}-${String(today.getDate()).padStart(2, '0')}`;
+      return vm?.proxy?.fromDate === '' && vm?.proxy?.toDate === key;
     });
-    assert.equal(period.printRows.length, 2);
-    assert.ok(period.printRows[0].balance.includes('1,200.00'));
-    assert.ok(period.printRows[1].balance.includes('700.00'));
     await go('/print/SalesInvoice/' + names.draft);
     assert.ok(
       (await page.locator('.nivo-standard-print').innerText()).includes('DRAFT')

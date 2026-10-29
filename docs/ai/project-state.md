@@ -1,6 +1,6 @@
 # Product decisions and known boundaries
 
-Reviewed against the 0.40.4 source on 2026-10-29. Read [package.json](../../package.json) for the current version and [CHANGELOG.md](../../CHANGELOG.md) for subsequent behavior. This note is a product baseline, not a claim that all bugs are fixed.
+Reviewed against the 0.40.5 source on 2026-10-29. Read [package.json](../../package.json) for the current version and [CHANGELOG.md](../../CHANGELOG.md) for subsequent behavior. This note is a product baseline, not a claim that all bugs are fixed.
 
 ## Keep these choices
 
@@ -26,3 +26,5 @@ Reviewed against the 0.40.4 source on 2026-10-29. Read [package.json](../../pack
 Update this note when a product rule or material limitation actually changes. Avoid embedding user-specific paths, data counts, bank details, signatures or transient process IDs.
 
 The 0.40.4 final audit added submit-time payment revalidation, singleton reload after rollback, isolated native print cleanup and cash-direction print label regressions. See the [final-polish audit](../final-polish-audit-2026-10-29.md) for validation scope.
+
+The 0.40.5 payment/report follow-up is recorded in [payment and report audit](../payment-and-report-audit-2026-10-29.md). Submitted-document corrections use cancellation/reversal and a separate draft; original entries remain in history.

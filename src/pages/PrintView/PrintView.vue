@@ -195,12 +195,21 @@ export default defineComponent({
   },
   methods: {
     async setStatementFrom(value: unknown) {
-      this.fromDate = typeof value === 'string' ? value : '';
+      this.fromDate =
+        value instanceof Date && !Number.isNaN(value.valueOf())
+          ? dateKey(value)
+          : typeof value === 'string'
+          ? value
+          : '';
       await this.refreshStatement();
     },
     async setStatementTo(value: unknown) {
       this.toDate =
-        typeof value === 'string' && value ? value : dateKey(new Date());
+        value instanceof Date && !Number.isNaN(value.valueOf())
+          ? dateKey(value)
+          : typeof value === 'string' && value
+          ? value
+          : dateKey(new Date());
       await this.refreshStatement();
     },
     async refreshStatement() {

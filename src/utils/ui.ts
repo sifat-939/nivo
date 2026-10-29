@@ -130,7 +130,7 @@ export async function deleteDocWithPrompt(doc: Doc) {
   })) as boolean;
 }
 
-export async function cancelDocWithPrompt(doc: Doc) {
+export async function cancelDocWithPrompt(doc: Doc, forCorrection = false) {
   let detail = t`This action is permanent`;
   if (['SalesInvoice', 'PurchaseInvoice'].includes(doc.schemaName)) {
     const payments = (
@@ -162,6 +162,10 @@ export async function cancelDocWithPrompt(doc: Doc) {
     }
   }
 
+  if (forCorrection) {
+    detail = `${detail}. ${t`The original will stay in the audit trail. A new draft will open for correction.`}`;
+  }
+
   return (await showDialog({
     title: t`Cancel ${getDocReferenceLabel(doc)}?`,
     detail,
@@ -173,7 +177,7 @@ export async function cancelDocWithPrompt(doc: Doc) {
           try {
             await doc.cancel();
           } catch (err) {
-            await handleErrorWithDialog(err as Error, doc);
+            await handleErrorWithDialog(err as Error, doc, false, true);
             return false;
           }
 
@@ -197,6 +201,7 @@ export function getActionsForDoc(doc?: Doc): Action[] {
 
   const actions: Action[] = [
     ...getActions(doc),
+    getCorrectAction(doc),
     getDuplicateAction(doc),
     getNewAction(doc),
     getDeleteAction(doc),
@@ -316,6 +321,42 @@ function getDuplicateAction(doc: Doc): Action {
       try {
         const dupe = doc.duplicate();
         await openEdit(dupe);
+      } catch (err) {
+        await handleErrorWithDialog(err as Error, doc);
+      }
+    },
+  };
+}
+
+function getCorrectAction(doc: Doc): Action {
+  return {
+    label: doc.schemaName === 'Payment' ? t`Correct Payment` : t`Correct`,
+    group: t`Create`,
+    condition: (doc: Doc) =>
+      doc.canCancel &&
+      !!doc.submitted &&
+      !isSchemaCreationBlocked(fyo, doc.schemaName, true),
+    async action() {
+      // Preserve the submitted entry and its reversal in the audit trail.
+      // Open a draft only after the regular cancellation flow succeeds.
+      try {
+        const correction = doc.duplicate();
+        if (!(await commonDocCancel(doc, true))) {
+          return;
+        }
+        if (doc.schemaName === 'Payment') {
+          const allocations = (correction.for ?? []) as Doc[];
+          // This is a new, unsaved draft. Reset copied allocation values before
+          // formula evaluation so the correction starts at zero without
+          // running submitted-payment validation against the source values.
+          for (const allocation of allocations) {
+            allocation.amount = fyo.pesa(0);
+          }
+          correction.amount = fyo.pesa(0);
+          correction.writeoff = fyo.pesa(0);
+          await correction.runFormulas();
+        }
+        await openEdit(correction);
       } catch (err) {
         await handleErrorWithDialog(err as Error, doc);
       }
@@ -563,8 +604,11 @@ export async function commongDocDelete(
   return true;
 }
 
-export async function commonDocCancel(doc: Doc): Promise<boolean> {
-  const res = await cancelDocWithPrompt(doc);
+export async function commonDocCancel(
+  doc: Doc,
+  forCorrection = false
+): Promise<boolean> {
+  const res = await cancelDocWithPrompt(doc, forCorrection);
   if (!res) {
     return false;
   }

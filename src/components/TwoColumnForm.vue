@@ -82,7 +82,12 @@ export default defineComponent({
     return {
       formFields: [],
       errors: {},
-    } as { formFields: Field[]; errors: Record<string, string> };
+      pendingChanges: Promise.resolve(),
+    } as {
+      formFields: Field[];
+      errors: Record<string, string>;
+      pendingChanges: Promise<void>;
+    };
   },
   computed: {
     style() {
@@ -96,6 +101,7 @@ export default defineComponent({
   },
   watch: {
     doc() {
+      this.errors = {};
       this.setFormFields();
     },
   },
@@ -118,19 +124,39 @@ export default defineComponent({
 
       return 'calc(var(--h-row-mid) + 1px)';
     },
-    async onChange(field: Field, value: DocValue) {
+    onChange(field: Field, value: DocValue): Promise<void> {
+      const doc = this.doc;
+      this.pendingChanges = this.pendingChanges.then(() =>
+        this.applyChange(field, value, doc)
+      );
+      return this.pendingChanges;
+    },
+    async flushChanges(): Promise<boolean> {
+      // Currency and other controls commit on blur, including shortcut saves.
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && this.$el.contains(active)) {
+        active.blur();
+      }
+      let pending: Promise<void>;
+      do {
+        pending = this.pendingChanges;
+        await pending;
+      } while (pending !== this.pendingChanges);
+      return Object.keys(this.errors).length === 0;
+    },
+    async applyChange(field: Field, value: DocValue, doc: Doc) {
       const { fieldname } = field;
       delete this.errors[fieldname];
 
       let isSet = false;
       try {
-        isSet = await this.doc.set(fieldname, value);
+        isSet = await doc.set(fieldname, value);
       } catch (err) {
         if (!(err instanceof Error)) {
           return;
         }
 
-        this.errors[fieldname] = getErrorMessage(err, this.doc);
+        this.errors[fieldname] = getErrorMessage(err, doc);
       }
 
       if (isSet) {

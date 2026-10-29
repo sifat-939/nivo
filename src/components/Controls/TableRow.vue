@@ -130,6 +130,7 @@ export default {
   data: () => ({
     isRowIndexVisible: false,
     errors: {},
+    pendingChange: Promise.resolve(),
   }),
   computed: {
     hasErrors() {
@@ -140,18 +141,34 @@ export default {
     this.$options.components.FormControl = FormControl;
   },
   methods: {
-    async onChange(df, value) {
-      const fieldname = df.fieldname;
-      this.errors[fieldname] = null;
-      const oldValue = this.row[fieldname];
-      try {
-        await this.row.set(fieldname, value);
-        this.$emit('change', df, value);
-      } catch (e) {
-        this.errors[fieldname] = getErrorMessage(e, this.row);
-        this.row[fieldname] = '';
-        nextTick(() => (this.row[fieldname] = oldValue));
+    onChange(df, value) {
+      const row = this.row;
+      this.pendingChange = this.pendingChange.then(async () => {
+        const fieldname = df.fieldname;
+        this.errors[fieldname] = null;
+        const oldValue = row[fieldname];
+        try {
+          await row.set(fieldname, value);
+          this.$emit('change', df, value);
+        } catch (e) {
+          this.errors[fieldname] = getErrorMessage(e, row);
+          row[fieldname] = '';
+          nextTick(() => (row[fieldname] = oldValue));
+        }
+      });
+      return this.pendingChange;
+    },
+    async flushChanges() {
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && this.$el.contains(active)) {
+        active.blur();
       }
+      let pending;
+      do {
+        pending = this.pendingChange;
+        await pending;
+      } while (pending !== this.pendingChange);
+      return !this.hasErrors;
     },
     getErrorString() {
       return Object.values(this.errors).filter(Boolean).join(' ');

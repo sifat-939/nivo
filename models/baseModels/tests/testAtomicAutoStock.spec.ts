@@ -91,6 +91,47 @@ test('invoice auto shipment is a nested submit in the invoice transaction', asyn
   t.equal(linked.length, 1, 'linked shipment committed with invoice');
   const shipment = await fyo.doc.getDoc(ModelNameEnum.Shipment, linked[0].name);
   t.ok(shipment.submitted, 'nested shipment is submitted');
+
+  const stockBeforeFailure = await fyo.db.getStockQuantity(
+    itemName,
+    locationName
+  );
+  const failingInvoice = fyo.doc.getNewDoc(ModelNameEnum.SalesInvoice, {
+    party: partyName,
+    date: new Date('2025-01-03'),
+    account: 'Debtors',
+  }) as Invoice;
+  await failingInvoice.append('items', {
+    item: itemName,
+    location: locationName,
+    quantity: 1,
+    rate: 100,
+  });
+  await failingInvoice.runFormulas();
+  await failingInvoice.sync();
+  const afterSubmit = failingInvoice.afterSubmit.bind(failingInvoice);
+  failingInvoice.afterSubmit = async () => {
+    await afterSubmit();
+    throw new Error('forced failure after nested shipment submit');
+  };
+
+  try {
+    await failingInvoice.submit();
+    t.fail('invoice submit should fail after its nested shipment');
+  } catch (error) {
+    t.match(String(error), /forced failure/, 'outer hook failure is returned');
+  }
+  t.notOk(failingInvoice.submitted, 'failed invoice remains a draft');
+  t.equal(
+    await fyo.db.getStockQuantity(itemName, locationName),
+    stockBeforeFailure,
+    'rollback restores stock after nested shipment posting'
+  );
+  const failedLinks = await fyo.db.getAll(ModelNameEnum.Shipment, {
+    fields: ['name'],
+    filters: { backReference: failingInvoice.name! },
+  });
+  t.equal(failedLinks.length, 0, 'rollback removes the nested shipment');
 });
 
 closeTestFyo(fyo, __filename);

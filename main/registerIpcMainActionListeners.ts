@@ -29,8 +29,13 @@ import {
 import { saveHtmlAsPdf } from './saveHtmlAsPdf';
 import { sendAPIRequest } from './api';
 import { initScheduler } from './initSheduler';
-import { assertExistingDatabase, getDatabaseDirectory } from './databaseFiles';
 import {
+  assertExistingDatabase,
+  getDatabaseDirectory,
+  pathsReferToSameLocation,
+} from './databaseFiles';
+import {
+  createDailyBackupWithRetention,
   createUserBackup,
   createVerifiedSnapshot,
   getDatabaseIdentity,
@@ -107,15 +112,18 @@ function consumeApprovedCreatePath(dbPath: string) {
 }
 
 async function assertNotCompanyDatabasePath(filePath: string) {
-  const resolved = path.resolve(filePath);
   if (
     databaseManager.db?.dbPath &&
-    path.resolve(databaseManager.db.dbPath) === resolved
-  )
+    (await pathsReferToSameLocation(filePath, databaseManager.db.dbPath))
+  ) {
     throw new Error('CannotOverwriteOpenDatabase');
+  }
   const configured = await setAndGetCleanedConfigFiles();
-  if (configured.some((file) => path.resolve(file.dbPath) === resolved))
-    throw new Error('CannotOverwriteCompanyDatabase');
+  for (const file of configured) {
+    if (await pathsReferToSameLocation(filePath, file.dbPath)) {
+      throw new Error('CannotOverwriteCompanyDatabase');
+    }
+  }
 }
 
 async function ensureDailyBackups(dbPath: string) {
@@ -137,13 +145,12 @@ async function ensureDailyBackups(dbPath: string) {
         }))
       );
       records.sort((a, b) => b.mtime - a.mtime);
-      for (const stale of records.slice(30))
-        await fs.remove(path.join(folder, stale.name));
       if (
         !records.length ||
         Date.now() - records[0].mtime >= 24 * 60 * 60 * 1000
-      )
-        await createUserBackup(dbPath, folder, 'daily');
+      ) {
+        await createDailyBackupWithRetention(dbPath, folder);
+      }
     };
     await createIfDue(localFolder);
     const external = backupConfig.get('dataToolsBackupFolder');
@@ -276,7 +283,7 @@ export default function registerIpcMainActionListeners(main: Main) {
     const filePath = path.resolve(picked.filePaths[0]);
     const check = await inspectDatabase(filePath);
     const activePath = databaseManager.db?.dbPath;
-    if (!activePath || path.resolve(activePath) === filePath)
+    if (!activePath || (await pathsReferToSameLocation(activePath, filePath)))
       throw new Error('CannotRestoreActiveDatabaseFile');
     const identity = await getDatabaseIdentity(filePath);
     const activeIdentity = await getDatabaseIdentity(activePath);
@@ -596,7 +603,10 @@ export default function registerIpcMainActionListeners(main: Main) {
       if (await fs.pathExists(dbFilePath)) {
         if (
           databaseManager.db?.dbPath &&
-          path.resolve(databaseManager.db.dbPath) === path.resolve(dbFilePath)
+          (await pathsReferToSameLocation(
+            databaseManager.db.dbPath,
+            dbFilePath
+          ))
         ) {
           const timestamp = new Date().toISOString().replace(/[-T:.Z]/g, '');
           dbFilePath = path.join(
@@ -830,7 +840,7 @@ export default function registerIpcMainActionListeners(main: Main) {
           throw new Error('DatabaseNotRegistered');
         if (
           databaseManager.db?.dbPath &&
-          path.resolve(databaseManager.db.dbPath) === resolved
+          (await pathsReferToSameLocation(databaseManager.db.dbPath, resolved))
         )
           throw new Error('CannotDeleteOpenDatabase');
         const answer = await dialog.showMessageBox(main.mainWindow!, {
@@ -911,7 +921,7 @@ export default function registerIpcMainActionListeners(main: Main) {
             throw new Error('DatabaseCreatePathNotApproved');
           if (
             databaseManager.db?.dbPath &&
-            path.resolve(databaseManager.db.dbPath) === path.resolve(dbPath)
+            (await pathsReferToSameLocation(databaseManager.db.dbPath, dbPath))
           )
             throw new Error('CannotOverwriteOpenDatabase');
           if (
