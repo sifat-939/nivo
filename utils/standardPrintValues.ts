@@ -169,10 +169,9 @@ export async function addStandardDocumentValues(doc: Doc, values: Values) {
     }
     const settled = Math.abs(total) - Math.abs(due);
     const adjustment = settled - received;
+    const receivesPayment = (schema === 'SalesInvoice') !== !!doc.returnAgainst;
     values.balanceLabel = `${money(Math.abs(due) / rate)} (${
-      (schema === 'SalesInvoice') !== !!doc.returnAgainst
-        ? 'To Receive'
-        : 'To Pay'
+      receivesPayment ? 'To Receive' : 'To Pay'
     })`;
     values.paymentMode =
       Math.abs(due) < 0.005
@@ -187,10 +186,7 @@ export async function addStandardDocumentValues(doc: Doc, values: Values) {
         ? 'Part Paid'
         : 'Credit';
     values.printTotals.push({
-      label:
-        schema === 'SalesInvoice' && !doc.returnAgainst
-          ? 'Received Amount'
-          : 'Paid Amount',
+      label: receivesPayment ? 'Received Amount' : 'Paid Amount',
       value: money(received / rate),
     });
     if (Math.abs(adjustment) >= 0.005)
@@ -231,7 +227,8 @@ export async function addStandardDocumentValues(doc: Doc, values: Values) {
     values.printTotals = [
       { label: 'Payment Amount', value: values.amount },
       {
-        label: 'Amount Paid',
+        label:
+          doc.paymentType === 'Receive' ? 'Amount Received' : 'Amount Paid',
         value: values.amountPaid || values.amount,
         emphasis: true,
       },

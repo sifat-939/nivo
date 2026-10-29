@@ -1,6 +1,6 @@
 # Product decisions and known boundaries
 
-Reviewed against the 0.40.3 source on 2026-10-29. Read [package.json](../../package.json) for the current version and [CHANGELOG.md](../../CHANGELOG.md) for subsequent behavior. This note is a product baseline, not a claim that all bugs are fixed.
+Reviewed against the 0.40.4 source on 2026-10-29. Read [package.json](../../package.json) for the current version and [CHANGELOG.md](../../CHANGELOG.md) for subsequent behavior. This note is a product baseline, not a claim that all bugs are fixed.
 
 ## Keep these choices
 
@@ -24,3 +24,5 @@ Reviewed against the 0.40.3 source on 2026-10-29. Read [package.json](../../pack
 `docs/final-audit-2026-10-29.md` describes an earlier 0.40.1 snapshot. Later print work is recorded in the changelog and print guide. The Bengali manual's 0.40.3 printing update intentionally changed only page 30 of the existing edition. Do not replace the rest when asked for a targeted tutorial change.
 
 Update this note when a product rule or material limitation actually changes. Avoid embedding user-specific paths, data counts, bank details, signatures or transient process IDs.
+
+The 0.40.4 final audit added submit-time payment revalidation, singleton reload after rollback, isolated native print cleanup and cash-direction print label regressions. See the [final-polish audit](../final-polish-audit-2026-10-29.md) for validation scope.

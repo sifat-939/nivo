@@ -229,6 +229,38 @@ test('printing uses this invoice allocation, excludes draft/cancelled receipts, 
     /100[.,]00/
   );
 });
+test('print cash labels follow invoice and return payment direction', async (t) => {
+  for (const schema of ['SalesInvoice', 'PurchaseInvoice']) {
+    for (const isReturn of [false, true]) {
+      const doc = fyo.doc.getNewDoc(schema, {
+        name: 'Print direction fixture',
+        submitted: true,
+        returnAgainst: isReturn ? 'Original invoice' : undefined,
+        grandTotal: fyo.pesa(isReturn ? -100 : 100),
+        baseGrandTotal: fyo.pesa(isReturn ? -100 : 100),
+        outstandingAmount: fyo.pesa(isReturn ? -100 : 100),
+      });
+      const view = await addStandardDocumentValues(doc, { items: [] });
+      const receives = (schema === 'SalesInvoice') !== isReturn;
+      t.ok(
+        view.printTotals!.some(
+          (row) => row.label === (receives ? 'Received Amount' : 'Paid Amount')
+        ),
+        `${schema}${isReturn ? ' return' : ''} cash direction`
+      );
+      t.equal(view.showPaymentQR, schema === 'SalesInvoice' && !isReturn);
+    }
+  }
+  for (const paymentType of ['Receive', 'Pay']) {
+    const doc = fyo.doc.getNewDoc('Payment', { paymentType });
+    const view = await addStandardDocumentValues(doc, { amount: '100.00' });
+    t.equal(
+      view.printTotals![1].label,
+      paymentType === 'Receive' ? 'Amount Received' : 'Amount Paid'
+    );
+    t.equal(view.showPaymentQR, false);
+  }
+});
 test('report layouts preserve selected columns, row style and filters without requesting payment', (t) => {
   const report: ReportPrintInput = {
     title: 'General Ledger',

@@ -716,7 +716,19 @@ export default function registerIpcMainActionListeners(main: Main) {
 
   ipcMain.handle(
     IPC_ACTIONS.PRINT_HTML_DOCUMENT,
-    async (_, html: string, width: number, height: number) => {
+    async (event, html: string, width: number, height: number) => {
+      assertTrustedRenderer(event, main);
+      if (
+        typeof html !== 'string' ||
+        html.length > 50_000_000 ||
+        !Number.isFinite(width) ||
+        !Number.isFinite(height) ||
+        width <= 0 ||
+        height <= 0 ||
+        width > 20_000 ||
+        height > 20_000
+      )
+        throw new Error('InvalidPrintArguments');
       return await printHtmlDocument(html, app, width, height);
     }
   );

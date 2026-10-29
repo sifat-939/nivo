@@ -368,6 +368,85 @@ test('cancelling a partial purchase return refund restores invoice and party out
   );
 });
 
+test('saved payment rechecks outstanding before posting', async (t) => {
+  const invoice = await createInvoice(
+    ModelNameEnum.SalesInvoice,
+    'Allocation Customer',
+    100
+  );
+  const stale = await createPayment(
+    'Allocation Customer',
+    'Receive',
+    ModelNameEnum.SalesInvoice,
+    invoice.name!,
+    100
+  );
+  const current = await createPayment(
+    'Allocation Customer',
+    'Receive',
+    ModelNameEnum.SalesInvoice,
+    invoice.name!,
+    100
+  );
+  await current.submit();
+  await assertThrows(
+    () => stale.submit(),
+    'saved payment cannot overpay a settled invoice'
+  );
+  const reloaded = await fyo.doc.getDoc(
+    ModelNameEnum.SalesInvoice,
+    invoice.name!
+  );
+  t.equal(
+    (reloaded.outstandingAmount as Money).float,
+    0,
+    'invoice stays settled'
+  );
+  t.notOk(stale.submitted, 'rejected stale payment remains a draft');
+  t.equal(
+    fyo.singles.AccountingSettings?.enablePartialPayment,
+    true,
+    'rollback reloads accounting settings'
+  );
+  const entries = await fyo.db.getAllRaw(ModelNameEnum.AccountingLedgerEntry, {
+    fields: ['name'],
+    filters: {
+      referenceType: ModelNameEnum.Payment,
+      referenceName: stale.name!,
+    },
+  });
+  t.equal(entries.length, 0, 'stale payment posts no ledger entries');
+});
+
+test('saved payment rejects a subsequently cancelled invoice', async (t) => {
+  const invoice = await createInvoice(
+    ModelNameEnum.SalesInvoice,
+    'Allocation Customer',
+    100
+  );
+  const payment = await createPayment(
+    'Allocation Customer',
+    'Receive',
+    ModelNameEnum.SalesInvoice,
+    invoice.name!,
+    100
+  );
+  await invoice.cancel();
+  await assertThrows(
+    () => payment.submit(),
+    'cancelled reference cannot be paid'
+  );
+  t.notOk(payment.submitted, 'payment remains a draft');
+  const entries = await fyo.db.getAllRaw(ModelNameEnum.AccountingLedgerEntry, {
+    fields: ['name'],
+    filters: {
+      referenceType: ModelNameEnum.Payment,
+      referenceName: payment.name!,
+    },
+  });
+  t.equal(entries.length, 0, 'cancelled reference posts no payment entries');
+});
+
 test('cancelling a normal partial payment restores outstanding', async (t) => {
   const invoice = await createInvoice(
     ModelNameEnum.SalesInvoice,

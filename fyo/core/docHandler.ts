@@ -33,6 +33,7 @@ export class DocHandler {
     this.#lifecycleActive = true;
     this.#lifecycleEvents = [];
     this.#lifecycleRollbacks = [];
+    const loadedSingles = Object.keys(this.singles);
     let committed = false;
     try {
       const result = await callback();
@@ -48,6 +49,11 @@ export class DocHandler {
           await rollback();
         }
         this.clearCache();
+        // Settings are read synchronously throughout the models. Restore their
+        // persisted values after rollback rather than leaving them unavailable.
+        for (const schemaName of loadedSingles) {
+          await this.getDoc(schemaName);
+        }
       }
       throw error;
     } finally {

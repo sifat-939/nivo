@@ -107,6 +107,10 @@ export class Payment extends Transactional {
     forReferences[0].amount = this.amount;
   }
 
+  async beforeSubmit() {
+    await this.validate();
+  }
+
   async validate() {
     await super.validate();
     if (this.submitted) {
@@ -447,6 +451,13 @@ export class Payment extends Transactional {
         allocation.type,
         allocation.name
       )) as Invoice;
+
+      if (!referenceDoc.isSubmitted) {
+        throw new ValidationError(
+          this.fyo
+            .t`Payment reference ${allocation.name} must be a submitted invoice.`
+        );
+      }
 
       const referenceOutstanding =
         referenceDoc.outstandingAmount?.abs() ?? this.fyo.pesa(0);

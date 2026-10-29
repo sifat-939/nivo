@@ -1,3 +1,12 @@
+## 0.40.4
+
+- Revalidate saved payment balances and invoice status immediately before posting.
+- Restore loaded singleton settings after lifecycle rollback/cache eviction.
+- Isolate and clean native PDF/print temporary files and hidden windows on failures and cancellation.
+- Validate the native print sender and dimensions, matching PDF export boundaries.
+- Correct purchase-return and received-payment print labels.
+- Add portable AI onboarding with architecture, development and task-specific guidance.
+
 ## 0.40.3
 
 - Restore readable invoice amount summaries in dark mode.

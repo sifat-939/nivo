@@ -9,30 +9,28 @@ export async function saveHtmlAsPdf(
   width: number, // centimeters
   height: number // centimeters
 ): Promise<boolean> {
-  /**
-   * Store received html as a file in a tempdir,
-   * this will be loaded into the print view
-   */
-  const tempRoot = app.getPath('temp');
-  const filename = path.parse(savePath).name;
-  const htmlPath = path.join(tempRoot, `${filename}.html`);
-  await fs.writeFile(htmlPath, html, { encoding: 'utf-8' });
-
-  const printWindow = await getInitializedPrintWindow(htmlPath, width, height);
-  const printOptions = {
-    margins: { top: 0, bottom: 0, left: 0, right: 0 }, // equivalent to previous 'marginType: 1'
-    pageSize: {
-      height: height / 2.54, // Convert from centimeters to inches
-      width: width / 2.54, // Convert from centimeters to inches
-    },
-    printBackground: true,
-  };
-
-  const data = await printWindow.webContents.printToPDF(printOptions);
-  await fs.writeFile(savePath, data);
-  printWindow.close();
-  await fs.unlink(htmlPath);
-  return true;
+  const tempDirectory = await fs.mkdtemp(
+    path.join(app.getPath('temp'), 'nivo-pdf-')
+  );
+  const htmlPath = path.join(tempDirectory, 'document.html');
+  let printWindow: BrowserWindow | undefined;
+  try {
+    await fs.writeFile(htmlPath, html, { encoding: 'utf-8' });
+    printWindow = await getInitializedPrintWindow(htmlPath, width, height);
+    const data = await printWindow.webContents.printToPDF({
+      margins: { top: 0, bottom: 0, left: 0, right: 0 },
+      pageSize: {
+        height: height / 2.54,
+        width: width / 2.54,
+      },
+      printBackground: true,
+    });
+    await fs.writeFile(savePath, data);
+    return true;
+  } finally {
+    if (printWindow && !printWindow.isDestroyed()) printWindow.destroy();
+    await fs.rm(tempDirectory, { recursive: true, force: true });
+  }
 }
 
 export async function getInitializedPrintWindow(
@@ -46,10 +44,15 @@ export async function getInitializedPrintWindow(
     show: false,
   });
 
-  await printWindow.loadFile(printFilePath);
-  await printWindow.webContents.executeJavaScript(`(async () => {
+  try {
+    await printWindow.loadFile(printFilePath);
+    await printWindow.webContents.executeJavaScript(`(async () => {
     await document.fonts.ready;
     await Promise.all(Array.from(document.images).map(image => image.decode().catch(() => {})));
   })()`);
-  return printWindow;
+    return printWindow;
+  } catch (error) {
+    if (!printWindow.isDestroyed()) printWindow.destroy();
+    throw error;
+  }
 }

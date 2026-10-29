@@ -31,5 +31,6 @@ exec ./node_modules/.bin/electron --require ts-node/register --require tsconfig-
   scripts/tests/testKarbarImportSafety.spec.ts \
   main/tests/databaseFiles.spec.ts \
   main/tests/appProtocol.spec.ts \
+  main/tests/printCleanup.spec.ts \
   main/tests/partyStatement.spec.ts \
   main/tests/importReconciliation.spec.ts
