@@ -33,6 +33,10 @@ Visit the repository's [Releases](https://github.com/sifat-939/nivo/releases) pa
 
 **Printing:** One Nivo Standard A4 design covers invoices and customer/supplier statements. Configure your logo, signature and payment QR in Settings → Print. See [Print Guide](docs/standard-print.md).
 
+## Working with an AI assistant
+
+Start with [AGENTS.md](AGENTS.md) and the [AI onboarding guide](docs/ai/README.md). They cover architecture, safe data boundaries, setup/tests, change recipes and current product decisions. Claude Code, Copilot and Gemini entry points reuse these instructions; Cursor can read AGENTS.md directly. A generic bootstrap prompt is included for other assistants.
+
 ## Development
 
 Requires Node.js **22** and Yarn Classic **1.22.22**.
