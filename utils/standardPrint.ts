@@ -11,6 +11,8 @@ export const printableTypes = [
   'PurchaseReceipt',
   'StockMovement',
   'Party',
+  'Expense',
+  'SalaryPayment',
 ];
 export function printTemplateFilter(schemaName: string) {
   return { type: ['in', [schemaName, STANDARD_PRINT_TYPE]] };

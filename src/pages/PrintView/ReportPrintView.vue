@@ -24,48 +24,16 @@
         "
       >
         <!-- Report Print Display Container -->
-        <ScaledContainer
-          ref="scaledContainer"
-          class="shadow-lg border bg-white mx-auto"
+        <PrintContainer
+          v-if="printValues && template"
+          ref="printContainer"
+          :print-schema-name="reportName"
+          :template="template"
+          :values="printValues"
           :scale="scale"
           :width="size.width"
           :height="size.height"
-          :show-overflow="true"
-        >
-          <div class="bg-white mx-auto">
-            <div class="p-2">
-              <div class="font-semibold text-xl w-full flex justify-between">
-                <h1>
-                  {{ `${fyo.singles.PrintSettings?.companyName}` }}
-                </h1>
-                <p class="text-gray-600">
-                  {{ title }}
-                </p>
-              </div>
-            </div>
-
-            <!-- Report Data -->
-            <div class="grid" :style="rowStyles">
-              <template v-for="(row, r) of matrix" :key="`row-${r}`">
-                <div
-                  v-for="(cell, c) of row"
-                  :key="`cell-${r}.${c}`"
-                  :class="cellClasses(cell.idx, r)"
-                  class="text-sm p-2"
-                  style="min-height: 2rem"
-                >
-                  {{ cell.value }}
-                </div>
-              </template>
-            </div>
-
-            <div class="border-t p-2">
-              <p class="text-xs text-right w-full">
-                {{ fyo.format(new Date(), 'Datetime') }}
-              </p>
-            </div>
-          </div>
-        </ScaledContainer>
+        />
       </div>
 
       <!-- Report Print Settings -->
@@ -159,7 +127,6 @@
   </div>
 </template>
 <script lang="ts">
-import { Verb } from 'fyo/telemetry/types';
 import { Report } from 'reports/Report';
 import { reports } from 'reports/index';
 import { OptionField } from 'schemas/types';
@@ -169,14 +136,17 @@ import Int from 'src/components/Controls/Int.vue';
 import Select from 'src/components/Controls/Select.vue';
 import PageHeader from 'src/components/PageHeader.vue';
 import { getReport } from 'src/utils/misc';
-import { getPathAndMakePDF } from 'src/utils/printTemplates';
+import { getPrintSettingsValues } from 'src/utils/printTemplates';
+import { getReportPrintValues } from 'utils/reportPrint';
+import { STANDARD_PRINT_NAME } from 'utils/standardPrint';
+import { PrintValues } from 'src/utils/types';
 import { showSidebar } from 'src/utils/refs';
 import { paperSizeMap, printSizes } from 'src/utils/ui';
 import { PropType, defineComponent } from 'vue';
-import ScaledContainer from '../TemplateBuilder/ScaledContainer.vue';
+import PrintContainer from '../TemplateBuilder/PrintContainer.vue';
 
 export default defineComponent({
-  components: { PageHeader, Button, Check, Int, ScaledContainer, Select },
+  components: { PageHeader, Button, Check, Int, PrintContainer, Select },
   props: {
     reportName: {
       type: String as PropType<keyof typeof reports>,
@@ -185,6 +155,8 @@ export default defineComponent({
   },
   data() {
     return {
+      template: '',
+      printSettings: {} as Record<string, unknown>,
       start: 1,
       limit: 0,
       printSize: 'A4' as typeof printSizes[number],
@@ -208,41 +180,17 @@ export default defineComponent({
           .map((name) => ({ value: name, label: name })),
       };
     },
-    matrix(): { value: string; idx: number }[][] {
-      if (!this.report) {
-        return [];
-      }
-
-      const columns = this.report.columns
-        .map((col, idx) => ({ value: col.label, idx }))
-        .filter((_, i) => this.columnSelection[i]);
-
-      const matrix: { value: string; idx: number }[][] = [columns];
-      const start = Math.max(this.start - 1, 0);
-      const end = Math.min(start + this.limit, this.report.reportData.length);
-      const slice = this.report.reportData.slice(start, end);
-
-      for (let i = 0; i < slice.length; i++) {
-        const row = slice[i];
-
-        matrix.push([]);
-        for (let j = 0; j < row.cells.length; j++) {
-          if (!this.columnSelection[j]) {
-            continue;
-          }
-
-          const value = row.cells[j].value;
-          matrix.at(-1)?.push({ value, idx: Number(j) });
-        }
-      }
-
-      return matrix;
-    },
-    rowStyles(): Record<string, string> {
-      const style: Record<string, string> = {};
-      const numColumns = this.columnSelection.filter(Boolean).length;
-      style['grid-template-columns'] = `repeat(${numColumns}, minmax(0, auto))`;
-      return style;
+    printValues(): PrintValues | null {
+      if (!this.report || !this.columnSelection.some(Boolean)) return null;
+      return {
+        doc: getReportPrintValues(
+          this.report as Report,
+          this.start,
+          this.limit,
+          this.columnSelection
+        ),
+        print: this.printSettings,
+      } as PrintValues;
     },
     size(): { width: number; height: number } {
       const size = paperSizeMap[this.printSize];
@@ -263,6 +211,12 @@ export default defineComponent({
   },
   async mounted() {
     this.report = await getReport(this.reportName);
+    this.printSettings = await getPrintSettingsValues(this.fyo);
+    this.template = String(
+      (await this.fyo.doc.getDoc('PrintTemplate', STANDARD_PRINT_NAME))
+        .template || ''
+    );
+    this.isLandscape = this.report.columns.length > 8;
     this.limit = this.report.reportData.length;
     this.columnSelection = this.report.columns.map(() => true);
 
@@ -302,45 +256,12 @@ export default defineComponent({
       this.scale = Math.min(containerWidth / pageWidthPx, 1);
     },
     async savePDF(shouldPrint?: boolean): Promise<void> {
-      // @ts-ignore
-      const innerHTML = this.$refs.scaledContainer.$el.children[0].innerHTML;
-      if (typeof innerHTML !== 'string') {
-        return;
-      }
-
+      const container = this.$refs.printContainer as
+        | { savePDF: (name: string, shouldPrint?: boolean) => Promise<void> }
+        | undefined;
+      if (!container || !this.columnSelection.some(Boolean)) return;
       const name = this.title + ' - ' + this.fyo.format(new Date(), 'Date');
-      await getPathAndMakePDF(
-        name,
-        innerHTML,
-        this.size.width,
-        this.size.height,
-        shouldPrint
-      );
-
-      this.fyo.telemetry.log(Verb.Printed, this.report!.reportName);
-    },
-    cellClasses(cIdx: number, rIdx: number): string[] {
-      const classes: string[] = [];
-      if (!this.report) {
-        return classes;
-      }
-
-      const col = this.report.columns[cIdx];
-      const isFirst = cIdx === 0;
-      if (col.align) {
-        classes.push(`text-${col.align}`);
-      }
-
-      if (rIdx === 0) {
-        classes.push('font-semibold');
-      }
-
-      classes.push('border-t');
-      if (!isFirst) {
-        classes.push('border-l');
-      }
-
-      return classes;
+      await container.savePDF(name, shouldPrint);
     },
   },
 });

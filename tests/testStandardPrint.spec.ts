@@ -1,3 +1,4 @@
+import { getReportPrintValues, ReportPrintInput } from 'utils/reportPrint';
 import test from 'tape';
 import fs from 'fs';
 import path from 'path';
@@ -227,5 +228,66 @@ test('printing uses this invoice allocation, excludes draft/cancelled receipts, 
       .value!,
     /100[.,]00/
   );
+});
+test('report layouts preserve selected columns, row style and filters without requesting payment', (t) => {
+  const report: ReportPrintInput = {
+    title: 'General Ledger',
+    columns: [],
+    reportData: [],
+    filters: [],
+    filterMap: { fromDate: '2026-01-01', toDate: '2026-12-31' },
+    fyo,
+  };
+  report.columns = [
+    { fieldname: 'account', label: 'Account', fieldtype: 'Data', width: 2 },
+    {
+      fieldname: 'debit',
+      label: 'Debit',
+      fieldtype: 'Currency',
+      align: 'right',
+      width: 1,
+    },
+  ];
+  report.reportData = [
+    {
+      cells: [
+        { value: 'Cash', rawValue: 'Cash', bold: true },
+        { value: '50.00', rawValue: 50 },
+      ],
+    },
+  ];
+  report.filters = [
+    { fieldname: 'fromDate', label: 'From Date', fieldtype: 'Date' },
+    { fieldname: 'toDate', label: 'To Date', fieldtype: 'Date' },
+  ];
+  const view = getReportPrintValues(report, 1, 1, [true, false]);
+  t.equal(view.showPaymentQR, false);
+  t.equal(view.showTerms, false);
+  t.equal(view.printColumns.length, 1);
+  t.equal(view.printRows[0]['0'], 'Cash');
+  t.equal(view.printRows[0]._cellStyles['0'].fontWeight, '700');
+  t.ok(view.printMetaLeft.some((field) => field.label === 'From Date'));
+  t.equal(
+    report.reportData[0].cells.length,
+    2,
+    'printing does not mutate report data'
+  );
+  t.end();
+});
+test('voucher policies have document-specific columns and never request another payment', async (t) => {
+  for (const [schema, title] of [
+    ['Expense', 'Expense Voucher'],
+    ['SalaryPayment', 'Salary Payment Voucher'],
+    ['Shipment', 'Delivery Note'],
+    ['PurchaseReceipt', 'Goods Receipt'],
+    ['StockMovement', 'Stock Movement'],
+  ]) {
+    const doc = fyo.doc.getNewDoc(schema);
+    const view = await addStandardDocumentValues(doc, { items: [] });
+    t.equal(view.printTitle, title);
+    t.equal(view.showPaymentQR, false);
+    t.equal(view.showTerms, false);
+    t.ok(Array.isArray(view.printMetaRight));
+  }
 });
 closeTestFyo(fyo, __filename);

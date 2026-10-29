@@ -23,3 +23,5 @@ node scripts/build-user-guide.cjs
 ```
 
 Chromium/HarfBuzz performs Bengali shaping. The builder checks page overflow and footer overlap before saving the tagged PDF with bookmarks. Render the final PDF and visually inspect every page after changing text, images or fonts. A generated PDF alone is not a visual QA pass.
+
+The 0.40.3 printing update changes only page 30. The base 0.40.2 manual edition, other 57 pages and other screenshots are retained; rendered-page comparison verifies this.

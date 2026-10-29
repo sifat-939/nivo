@@ -68,8 +68,8 @@ Build commands:
 To publish new releases, ensure the version is updated in `package.json`, then push a git tag:
 
 ```bash
-git tag v0.40.2
-git push origin v0.40.2
+git tag v0.40.3
+git push origin v0.40.3
 ```
 
 The GitHub Actions workflow runs automated test suites, regression checks, and publishes the Windows setup, portable executables, and Linux AppImage under GitHub Releases. See [Release Process](docs/release-process.md) for details.

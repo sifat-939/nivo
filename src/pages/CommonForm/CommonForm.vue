@@ -116,7 +116,7 @@
           />
           <div
             v-if="showInvoiceFinancialSummary && n === t`Items`"
-            class="mx-4 my-3 rounded border dark:border-gray-800 px-4 py-3"
+            class="nivo-invoice-summary mx-4 my-3 rounded border dark:border-gray-800 px-4 py-3 text-gray-900 dark:text-gray-100"
           >
             <div class="grid grid-cols-3 gap-4 text-sm">
               <div>

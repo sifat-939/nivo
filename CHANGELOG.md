@@ -1,3 +1,11 @@
+## 0.40.3
+
+- Restore readable invoice amount summaries in dark mode.
+- Apply company logo/signature to all six report print views while preserving report filters, columns, grouping and totals.
+- Use distinct invoice, quote, payment, journal, delivery/receipt, stock movement, expense and salary voucher layouts in the shared standard design.
+- Show payment QR only on issued sales invoices with a balance due and eligible customer statements.
+- Update only the printing section (page 30) of the existing Bengali manual.
+
 ## 0.40.2
 
 - Replace obsolete print templates with one shared Nivo Standard A4 design.

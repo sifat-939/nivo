@@ -1,15 +1,11 @@
-Nivo is an offline accounting desktop application based on Frappe Books (AGPL-3.0-only).
+Nivo 0.40.3 fixes invoice amount visibility in dark mode and completes the shared print design across documents and reports.
 
-## Nivo 0.40.2 - Standard invoice and account statement
+Every print uses the company's Print Settings logo/contact header and signature footer. Invoices and quotations keep item/price tables; payment receipts show allocations/accounts/method; journals show debit/credit; delivery/receipt and stock movement documents show quantities and locations; expense and salary vouchers show their own financial details. General Ledger, Profit and Loss, Balance Sheet, Trial Balance, Stock Ledger and Stock Balance retain their own selected columns, filters, rows, group formatting and totals. Wide reports start in landscape.
 
-One A4 design, **Nivo Standard**, replaces the former built-in and custom templates. It includes a green item table, amount in words, invoice totals, allocated payments, balance due, and company-controlled signature and QR images. Images stay in each company's Print Settings; no personal signature or payment QR is shipped in the public repository.
+QR appears only on submitted sales invoices with an outstanding balance and eligible positive customer account statements. Settled invoices, returns, payment receipts, payroll/expense vouchers and general reports do not request another payment. Drafts continue to show DRAFT and a signature line rather than the stored signature image.
 
-Open a Customer or Supplier and choose Print to create an **Account Statement**. The From/To filters retain the opening balance; active receivable/payable ledger entries produce running and closing balances. Drafts and cancellation/reversal entries are excluded. Invoices with non-cash adjustments label them separately from payments. Draft invoices show DRAFT and do not display the stored signature.
+Only page 30 (printing) of the Bengali manual is updated. Its original edition and other 57 pages are preserved. Company signatures, payment QR and private data are never included in the public repository.
 
-Company initialization replaces obsolete template records and redirects Defaults/POS template references atomically. A migration backup is created before existing databases are migrated. No invoice, payment or ledger is reposted or deleted. The previous application and database backup should be retained until the upgrade is checked.
+Windows x64: choose the -setup.exe installer, or -portable.exe. Installers are unsigned. CI checks packaged startup; physical Windows install/upgrade/uninstall testing remains separate. Linux: use scripts/install-linux.py with the AppImage. Back up company data before upgrading. No business transaction or ledger is reposted by this update; legacy import reconciliation remains a separate accounting task.
 
-Windows 10/11 x64: download **-setup.exe** to install or **-portable.exe** to run without installation. Installers are unsigned. SHA256SUMS.txt contains the release checksums. CI tests packaged startup; a physical Windows installation/upgrade/uninstall test remains separate.
-
-Linux: use the AppImage with scripts/install-linux.py. Automatic upstream updates remain disabled.
-
-The updated Bengali user guide covers 52 application sections, including statements and Print Settings. Back up databases before upgrading. Historical imports still require business-specific ledger/opening/stock reconciliation; printing does not complete that reconciliation.
+Nivo is based on Frappe Books, licensed AGPL-3.0-only. Upstream attribution is retained.

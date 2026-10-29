@@ -6,7 +6,12 @@ const { pathToFileURL } = require('node:url');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '..');
 const dir = path.join(root, 'docs/user-guide');
-const version = require('../package.json').version;
+// The manual edition stays fixed when only selected sections receive an update.
+const version =
+  process.env.NIVO_GUIDE_VERSION ||
+  JSON.parse(
+    fs.readFileSync(path.join(root, 'docs/user-guide/screenshots.json'), 'utf8')
+  ).version;
 const chapters = JSON.parse(
   fs.readFileSync(path.join(dir, 'chapters.json'), 'utf8')
 );

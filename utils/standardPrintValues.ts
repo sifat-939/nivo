@@ -24,6 +24,7 @@ interface Values extends Record<string, unknown> {
   amountPaid?: string;
   writeoff?: string;
   debit?: string;
+  printNote?: string;
   credit?: string;
 }
 const column = (key: string, label: string, align = 'left', width = '') => ({
@@ -84,6 +85,11 @@ export async function addStandardDocumentValues(doc: Doc, values: Values) {
     : doc.schema.isSubmittable && !doc.submitted
     ? 'DRAFT'
     : '';
+  if (doc.returnAgainst)
+    values.printTitle =
+      schema === 'SalesInvoice' ? 'Sales Return' : 'Purchase Return';
+  if (schema === 'Shipment') values.printTitle = 'Delivery Note';
+  if (schema === 'PurchaseReceipt') values.printTitle = 'Goods Receipt';
   values.numberLabel = invoice ? 'Invoice No' : 'Reference';
   values.dateLabel = invoice ? 'Invoice Date' : 'Date';
   for (const key of [
@@ -102,11 +108,15 @@ export async function addStandardDocumentValues(doc: Doc, values: Values) {
   values.date = doc.date ? printDate(doc.date as Date | string) : '';
   values.partyAddress =
     values.links?.party?.links?.address?.addressDisplay || '';
+  values.showTerms = ['SalesInvoice', 'PurchaseInvoice', 'SalesQuote'].includes(
+    schema
+  );
   values.showPaymentQR =
     schema === 'SalesInvoice' &&
     !doc.returnAgainst &&
     !!doc.submitted &&
-    !doc.isCancelled;
+    !doc.isCancelled &&
+    num(doc.outstandingAmount) > 0.004;
   values.printColumns = [
     column('index', 'S.N.', 'center', '7%'),
     column('item', 'Name', 'left', '33%'),
@@ -204,6 +214,9 @@ export async function addStandardDocumentValues(doc: Doc, values: Values) {
     ];
     values.printRows = (values.for || []).map((r: PrintRow, i: number) => ({
       ...r,
+      amount: r.amount ? printMoney(String(r.amount)) : '',
+      referenceType:
+        doc.fyo.schemaMap[String(r.referenceType)]?.label || r.referenceType,
       index: i + 1,
     }));
     if (!values.printRows.length)
@@ -233,9 +246,24 @@ export async function addStandardDocumentValues(doc: Doc, values: Values) {
   ) {
     values.printColumns = [
       column('index', 'S.N.', 'center', '8%'),
-      column('item', 'Name', 'left', '62%'),
-      column('quantity', 'Qty', 'right', '30%'),
+      column('item', 'Name', 'left', '40%'),
+      column(
+        'location',
+        schema === 'Shipment' ? 'From Location' : 'To Location',
+        'left',
+        '25%'
+      ),
+      column('quantity', 'Qty', 'right', '27%'),
     ];
+    if (schema === 'StockMovement')
+      values.printColumns = [
+        column('index', 'S.N.', 'center', '6%'),
+        column('item', 'Item', 'left', '28%'),
+        column('fromLocation', 'From', 'left', '22%'),
+        column('toLocation', 'To', 'left', '22%'),
+        column('quantity', 'Qty', 'right', '22%'),
+      ];
+    values.printNote = String(doc.terms || '');
     values.printTotals = [];
   } else if (schema === 'JournalEntry') {
     values.printColumns = [
@@ -248,13 +276,117 @@ export async function addStandardDocumentValues(doc: Doc, values: Values) {
     values.printRows = (values.accounts || []).map(
       (r: PrintRow, i: number) => ({
         ...r,
+        debit: r.debit ? printMoney(String(r.debit)) : '',
+        credit: r.credit ? printMoney(String(r.credit)) : '',
         index: i + 1,
       })
     );
+    const accounts = Array.isArray(doc.accounts) ? (doc.accounts as Doc[]) : [];
     values.printTotals = [
-      { label: 'Total Debit', value: values.debit },
-      { label: 'Total Credit', value: values.credit },
+      {
+        label: 'Total Debit',
+        value: money(accounts.reduce((sum, row) => sum + num(row.debit), 0)),
+      },
+      {
+        label: 'Total Credit',
+        value: money(accounts.reduce((sum, row) => sum + num(row.credit), 0)),
+      },
     ];
+    values.printNote = String(doc.userRemark || '');
+  }
+  const meta = (label: string, value: unknown) => ({
+    label,
+    value: String(value ?? ''),
+  });
+  values.printMetaLeft = [
+    meta('Party', values.party),
+    meta('Address', values.partyAddress),
+    meta('Balance', values.balanceLabel),
+  ].filter((field) => field.value);
+  values.printMetaRight = [
+    meta(String(values.numberLabel), doc.name),
+    meta(String(values.dateLabel), values.date),
+    meta('Payment Mode', values.paymentMode),
+    meta('Return Against', doc.returnAgainst),
+  ].filter((field) => field.value);
+  if (schema === 'Payment') {
+    values.printMetaLeft = [
+      meta('Party', values.party),
+      meta('Address', values.partyAddress),
+      meta('From Account', doc.account),
+      meta('To Account', doc.paymentAccount),
+    ].filter((field) => field.value);
+    if (doc.referenceId)
+      (values.printMetaRight as { label: string; value: string }[]).push(
+        meta('Payment Ref', doc.referenceId)
+      );
+  }
+  if (schema === 'JournalEntry')
+    values.printMetaLeft = [
+      meta('Entry Type', doc.entryType),
+      meta('External Ref', doc.referenceNumber),
+    ].filter((field) => field.value);
+  if (['Shipment', 'PurchaseReceipt'].includes(schema) && doc.backReference)
+    (values.printMetaRight as { label: string; value: string }[]).push(
+      meta('Invoice Ref', doc.backReference)
+    );
+  if (schema === 'StockMovement')
+    values.printMetaLeft = [
+      meta('Movement', doc.movementType || doc.type),
+    ].filter((field) => field.value);
+  if (['Expense', 'SalaryPayment'].includes(schema)) {
+    values.printTitle =
+      schema === 'Expense' ? 'Expense Voucher' : 'Salary Payment Voucher';
+    values.showTerms = false;
+    values.printColumns = [
+      column('description', 'Description', 'left', '70%'),
+      column('amount', 'Amount', 'right', '30%'),
+    ];
+    values.printMetaLeft = [
+      meta('Expense Account', doc.expenseAccount),
+      meta('Paid From', doc.paidFrom),
+    ].filter((field) => field.value);
+    if (schema === 'Expense') {
+      values.printRows = [
+        {
+          description: String(doc.description || 'Expense'),
+          amount: money(num(doc.amount)),
+        },
+      ];
+      values.printTotals = [
+        {
+          label: 'Total Expense',
+          value: money(num(doc.amount)),
+          emphasis: true,
+        },
+      ];
+    } else {
+      const employee = doc.employee
+        ? await doc.fyo.doc.getDoc('Employee', String(doc.employee))
+        : undefined;
+      values.printMetaLeft = [
+        meta('Employee', employee?.employeeName || doc.employee),
+        meta('Employee ID', doc.employee),
+        meta('Paid From', doc.paidFrom),
+      ];
+      (values.printMetaRight as { label: string; value: string }[]).push(
+        meta(
+          'Salary Month',
+          doc.salaryMonth
+            ? dateKey(doc.salaryMonth as Date | string).slice(0, 7)
+            : ''
+        )
+      );
+      values.printRows = [
+        { description: 'Salary', amount: money(num(doc.salary)) },
+        { description: 'Bonus', amount: money(num(doc.bonus)) },
+        { description: 'Less: Deductions', amount: money(num(doc.deductions)) },
+      ];
+      values.printTotals = [
+        { label: 'Net Pay', value: money(num(doc.netPay)), emphasis: true },
+      ];
+      values.printNote = String(doc.remarks || '');
+    }
   }
   return values;
 }
@@ -351,5 +483,19 @@ export async function getStatementValues(
       },
     ],
     closingAmount: Math.abs(result.closing),
+    showTerms: false,
+    printMetaLeft: [
+      { label: 'Party', value: party.name },
+      { label: 'Address', value: address },
+      { label: 'Balance', value: balance(result.closing) },
+    ].filter((field) => field.value),
+    printMetaRight: [
+      { label: 'From', value: from ? printDate(from) : 'Beginning' },
+      { label: 'To', value: printDate(to) },
+      {
+        label: 'Currency',
+        value: String(fyo.singles.SystemSettings?.currency || ''),
+      },
+    ],
   };
 }

@@ -51,10 +51,7 @@ export async function getPrintTemplatePropValues(
   statementRange: { from?: string; to?: string } = {}
 ): Promise<PrintValues> {
   const printSettings = await doc.fyo.doc.getDoc(ModelNameEnum.PrintSettings);
-  const print = await getPrintTemplateDocValues(
-    printSettings,
-    printSettingsFields
-  );
+  const print = await getPrintSettingsValues(doc.fyo);
   if (doc.schemaName === 'Party') {
     const values = await getStatementValues(
       doc,
@@ -73,18 +70,40 @@ export async function getPrintTemplatePropValues(
   if (doc instanceof Invoice)
     values.totalDiscount = formattedTotalDiscount(doc);
   await addStandardDocumentValues(doc, values);
-  const total = (doc.grandTotal ?? doc.amountPaid ?? doc.amount) as
-    | Money
-    | undefined;
-  if (total)
-    values.totalInWords = wordsWithCurrency(Math.abs(total.float), doc.fyo);
+  const total = (doc.grandTotal ??
+    doc.netPay ??
+    doc.amountPaid ??
+    doc.amount) as Money | undefined;
+  if (
+    total &&
+    !['Shipment', 'PurchaseReceipt', 'StockMovement', 'JournalEntry'].includes(
+      doc.schemaName
+    )
+  )
+    values.totalInWords = wordsWithCurrency(
+      Math.abs(total.float),
+      doc.fyo,
+      doc.currency
+    );
   if (printSettings.displayTime && doc.date)
     values.time = getTime(String(doc.date));
   return { doc: values, print };
 }
 
-function wordsWithCurrency(total: number, fyo: Fyo) {
-  const currency = String(fyo.singles.SystemSettings?.currency || '');
+export async function getPrintSettingsValues(fyo: Fyo) {
+  const settings = await fyo.doc.getDoc(ModelNameEnum.PrintSettings);
+  return getPrintTemplateDocValues(settings, printSettingsFields);
+}
+
+function wordsWithCurrency(
+  total: number,
+  fyo: Fyo,
+  documentCurrency?: unknown
+) {
+  const currency =
+    typeof documentCurrency === 'string' && documentCurrency
+      ? documentCurrency
+      : String(fyo.singles.SystemSettings?.currency || '');
   const name =
     (
       { BDT: 'Taka', INR: 'Rupees', USD: 'Dollars', EUR: 'Euros' } as Record<

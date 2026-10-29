@@ -83,6 +83,7 @@ const { execFileSync } = require('node:child_process');
         displayLogo: true,
         logo: svg('DEMO'),
         authorizedSignature: svg('Sample'),
+        paymentQR: svg('DEMO QR'),
         phone: '01234567890',
         email: 'demo@example.test',
         displaytermsandconditions: true,
@@ -135,6 +136,36 @@ const { execFileSync } = require('node:child_process');
       await page.waitForTimeout(200);
       console.log('Exported', savePath);
     };
+    // The amount summary must inherit an explicit readable foreground in both themes.
+    await page.evaluate(async (name) => {
+      const f =
+        document.querySelector('[data-v-app]')._vnode.component.proxy.fyo;
+      await f.singles.SystemSettings.setAndSync('darkMode', true);
+      document.documentElement.classList.add('dark');
+      await document
+        .querySelector('[data-v-app]')
+        .__vue_app__.config.globalProperties.$router.push(
+          '/edit/SalesInvoice/' + name
+        );
+    }, names.sale);
+    await page.locator('.nivo-invoice-summary').waitFor();
+    const darkColor = await page
+      .locator('.nivo-invoice-summary .font-semibold')
+      .first()
+      .evaluate((el) => getComputedStyle(el).color);
+    assert.ok(
+      Number(darkColor.match(/\d+/g)[0]) > 200,
+      'dark theme amount text is light'
+    );
+    await page
+      .locator('.nivo-invoice-summary')
+      .screenshot({ path: path.join(output, 'dark-amount-summary.png') });
+    await page.evaluate(async () => {
+      const f =
+        document.querySelector('[data-v-app]')._vnode.component.proxy.fyo;
+      await f.singles.SystemSettings.setAndSync('darkMode', false);
+      document.documentElement.classList.remove('dark');
+    });
     await go('/print/SalesInvoice/' + names.sale);
     let text = await page.locator('.nivo-standard-print').innerText();
     assert.ok(text.includes('Sales Details'));
@@ -249,6 +280,139 @@ const { execFileSync } = require('node:child_process');
     });
     await go('/print/SalesInvoice/' + longName);
     await save('pagination-stress.pdf');
+    // Each printable area keeps its own content inside the common branding shell.
+    for (const [schema, name, title] of [
+      ['Payment', names.payment, 'Payment Voucher'],
+      ['Expense', names.expense, 'Expense Voucher'],
+      ['SalaryPayment', names.salary, 'Salary Payment Voucher'],
+    ]) {
+      await go(`/print/${schema}/${name}`);
+      assert.ok(
+        (await page.locator('.nivo-standard-print').innerText()).includes(title)
+      );
+      assert.equal(await page.locator('img[alt="Company logo"]').count(), 1);
+      assert.equal(
+        await page.locator('img[alt="Authorized signature"]').count(),
+        1
+      );
+      assert.equal(await page.locator('img[alt="Payment QR"]').count(), 0);
+      await save(`${schema}-sample.pdf`);
+    }
+    for (const name of [
+      'GeneralLedger',
+      'ProfitAndLoss',
+      'BalanceSheet',
+      'TrialBalance',
+      'StockLedger',
+      'StockBalance',
+    ]) {
+      await page.evaluate(async (name) => {
+        const f =
+          document.querySelector('[data-v-app]')._vnode.component.proxy.fyo;
+        await f.singles.AccountingSettings.setAndSync('enableInventory', true);
+        await document
+          .querySelector('[data-v-app]')
+          .__vue_app__.config.globalProperties.$router.push(
+            '/report-print/' + name
+          );
+      }, name);
+      await page.locator('.nivo-standard-print').waitFor();
+      assert.equal(await page.locator('img[alt="Company logo"]').count(), 1);
+      assert.equal(
+        await page.locator('img[alt="Authorized signature"]').count(),
+        1
+      );
+      assert.equal(await page.locator('img[alt="Payment QR"]').count(), 0);
+      await save(`${name}-sample.pdf`);
+      if (
+        name === 'GeneralLedger' &&
+        process.env.NIVO_UPDATE_PRINT_GUIDE === '1'
+      ) {
+        await page.waitForTimeout(3500);
+        await page.screenshot({
+          path: path.join(root, 'docs/user-guide/images/print.jpg'),
+          type: 'jpeg',
+          quality: 86,
+        });
+      }
+    }
+    const more = await page.evaluate(async () => {
+      const f =
+        document.querySelector('[data-v-app]')._vnode.component.proxy.fyo;
+      const quote = f.doc.getNewDoc('SalesQuote', {
+        party: 'Rafiq Store',
+        date: '2026-10-20',
+        items: [{ item: 'Gift Bag', quantity: 2, rate: 120 }],
+      });
+      await quote.sync();
+      await f.doc
+        .getNewDoc('Item', {
+          name: 'Print stock item',
+          unit: 'Unit',
+          rate: 5,
+          trackItem: true,
+          for: 'Both',
+        })
+        .sync();
+      const locations = await f.db.getAllRaw('Location', {
+        fields: ['name'],
+        limit: 1,
+      });
+      const location = locations[0].name;
+      const movement = f.doc.getNewDoc('StockMovement', {
+        date: '2026-10-20',
+        movementType: 'MaterialReceipt',
+        items: [
+          {
+            item: 'Print stock item',
+            quantity: 10,
+            rate: 5,
+            toLocation: location,
+          },
+        ],
+      });
+      await movement.sync();
+      // A submitted receipt creates stock in the disposable company for the delivery test.
+      await movement.submit();
+      const shipment = f.doc.getNewDoc('Shipment', {
+        party: 'Rafiq Store',
+        date: '2026-10-21',
+        items: [{ item: 'Print stock item', quantity: 2, rate: 5, location }],
+      });
+      await shipment.sync();
+      const receipt = f.doc.getNewDoc('PurchaseReceipt', {
+        party: 'Metro Supply',
+        date: '2026-10-21',
+        items: [{ item: 'Print stock item', quantity: 3, rate: 5, location }],
+      });
+      await receipt.sync();
+      return [
+        ['SalesQuote', quote.name],
+        ['StockMovement', movement.name],
+        ['Shipment', shipment.name],
+        ['PurchaseReceipt', receipt.name],
+      ];
+    });
+    for (const [schema, name] of more) {
+      await go(`/print/${schema}/${name}`);
+      assert.equal(await page.locator('img[alt="Payment QR"]').count(), 0);
+      await save(`${schema}-sample.pdf`);
+    }
+    const paidName = await page.evaluate(async (name) => {
+      const f =
+        document.querySelector('[data-v-app]')._vnode.component.proxy.fyo;
+      const d = await f.doc.getDoc('SalesInvoice', name);
+      const p = d.getPayment();
+      await p.sync();
+      await p.submit();
+      return d.name;
+    }, names.sale);
+    await go('/print/SalesInvoice/' + paidName);
+    assert.equal(
+      await page.locator('img[alt="Payment QR"]').count(),
+      0,
+      'fully paid sales invoice has no payment QR'
+    );
     await page.evaluate(async () => {
       await document
         .querySelector('[data-v-app]')

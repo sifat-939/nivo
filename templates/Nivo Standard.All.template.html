@@ -1,4 +1,8 @@
-<main class="nivo-standard-print" :style="{fontFamily: print.font || 'Arial'}">
+<main
+  class="nivo-standard-print"
+  :class="{'nivo-print-report':doc.isReport}"
+  :style="{fontFamily: print.font || 'Arial'}"
+>
   <header
     style="display: flex; align-items: center; gap: 12px; margin-bottom: 32px"
   >
@@ -48,47 +52,30 @@
     style="display: flex; gap: 20px; margin-bottom: 32px; font-size: 13px"
   >
     <div style="flex: 1; min-width: 0">
-      <div class="nivo-print-meta">
-        <span>Party:</span><strong>{{doc.party || doc.name}}</strong>
-      </div>
-      <div v-if="doc.partyAddress" class="nivo-print-meta">
-        <span>Address:</span
-        ><strong style="white-space: pre-line">{{doc.partyAddress}}</strong>
-      </div>
-      <div v-if="doc.balanceLabel" class="nivo-print-meta">
-        <span>Balance:</span><strong>{{doc.balanceLabel}}</strong>
+      <div
+        v-for="(field,i) in doc.printMetaLeft"
+        :key="i"
+        class="nivo-print-meta"
+      >
+        <span>{{field.label}}:</span
+        ><strong style="white-space: pre-line">{{field.value}}</strong>
       </div>
     </div>
     <div style="width: 42%; min-width: 0">
-      <template v-if="doc.isStatement">
-        <div class="nivo-print-meta">
-          <span>From:</span><strong>{{doc.fromDate || 'Beginning'}}</strong>
-        </div>
-        <div class="nivo-print-meta">
-          <span>To:</span><strong>{{doc.toDate || 'Today'}}</strong>
-        </div>
-        <div class="nivo-print-meta">
-          <span>Currency:</span><strong>{{doc.currency}}</strong>
-        </div>
-      </template>
-      <template v-else>
-        <div class="nivo-print-meta">
-          <span>{{doc.numberLabel}}:</span><strong>{{doc.name}}</strong>
-        </div>
-        <div class="nivo-print-meta">
-          <span>{{ doc.dateLabel || 'Date' }}:</span
-          ><strong>{{doc.date}}</strong>
-        </div>
-        <div v-if="doc.paymentMode" class="nivo-print-meta">
-          <span>Payment Mode:</span><strong>{{doc.paymentMode}}</strong>
-        </div>
-        <div v-if="doc.returnAgainst" class="nivo-print-meta">
-          <span>Return Against:</span><strong>{{doc.returnAgainst}}</strong>
-        </div>
-      </template>
+      <div
+        v-for="(field,i) in doc.printMetaRight"
+        :key="i"
+        class="nivo-print-meta"
+      >
+        <span>{{field.label}}:</span
+        ><strong style="white-space: pre-line">{{field.value}}</strong>
+      </div>
     </div>
   </section>
-  <table class="nivo-print-table">
+  <table
+    class="nivo-print-table"
+    :style="doc.isReport ? {fontSize:doc.printColumns.length > 9 ? '10px' : '12px'} : {}"
+  >
     <thead>
       <tr>
         <th
@@ -105,7 +92,7 @@
         <td
           v-for="column in doc.printColumns"
           :key="column.key"
-          :style="{textAlign:column.align || 'left'}"
+          :style="{textAlign:column.align || 'left',...row._cellStyles?.[column.key]}"
         >
           {{row[column.key]}}
         </td>
@@ -120,7 +107,11 @@
       </tr>
     </tbody>
   </table>
+  <p v-if="doc.printNote" style="margin-top: 20px; white-space: pre-line">
+    <strong>Notes: </strong>{{doc.printNote}}
+  </p>
   <section
+    v-if="doc.totalInWords || doc.printTotals?.length || (doc.showTerms !== false && (doc.terms || print.displaytermsandconditions))"
     style="
       display: flex;
       gap: 28px;
@@ -135,7 +126,7 @@
         <p style="margin: 12px 0 26px">{{doc.totalInWords}}</p>
       </template>
       <template
-        v-if="doc.terms || (print.displaytermsandconditions && print.termsAndConditions)"
+        v-if="doc.showTerms !== false && (doc.terms || (print.displaytermsandconditions && print.termsAndConditions))"
       >
         <h3 class="nivo-print-label">Terms &amp; Conditions</h3>
         <p style="margin-top: 12px; white-space: pre-line">

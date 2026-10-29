@@ -1,4 +1,4 @@
-# Nivo Standard printing (0.40.2)
+# Nivo Standard printing (0.40.3)
 
 There is one A4 print template, **Nivo Standard**, shared by sales/purchase invoices, quotes, payment vouchers, journal entries, stock documents and party statements. Document headings and columns adapt to their type. The sample's green table, company header, amount in words, totals and signature layout are retained.
 
@@ -24,3 +24,11 @@ The public source contains no company signature, payment QR, customer invoice or
 ## Verification
 
 Regression tests cover control-account balances, period opening/closing, reversal exclusions, atomic replacement/rollback, idempotence and shared-payment allocations. The packaged UI test exports invoice and statement PDFs, checks draft signatures, and exercises a 65-line invoice. Table headings repeat on subsequent PDF pages; totals/signature appear after the table. Preview pages scroll for long documents; PDF output paginates at A4 size.
+
+## Per-document layouts and reports
+
+The branding shell is shared; the contents are specific to each document. Payment receipts show reference allocations and source/destination accounts. Journal totals are calculated from their debit/credit lines. Delivery and goods-receipt tables show the relevant location; stock movements show both locations. Expense vouchers show expense account, payment source and description; salary vouchers show employee, pay month, salary, bonus, deductions and net pay.
+
+All six financial/inventory report print views now use the same company header/footer. Their current filters, selected columns, row range, hierarchy, bold subtotals and original report values are retained; printing does not recompute or post transactions. Wide reports default to landscape, and headers repeat on following pages. No general report or completed payment voucher displays a payment QR. A sales invoice also suppresses the QR after its due reaches zero.
+
+The invoice form's financial summary has explicit foreground colors for both themes. The manual update is restricted to its printing chapter (page 30); the original edition label and the other pages remain unchanged.
